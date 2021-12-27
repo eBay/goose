@@ -1,7 +1,9 @@
-# GitHub Webhook Dispatch
+# Henrybot, the github event dispatcher
 
-A tool which simplifies gitops by using offering a mapping between "file globs I
-care about" and "service to call with those files".
+![](./henrybot.png)
+
+Henrybot is a tool which simplifies gitops by using offering a mapping between
+"file globs I care about" and "service to call with those files".
 
 ## Why?
 Internally, there are several places where we need to configure resources by
