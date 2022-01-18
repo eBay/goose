@@ -4,6 +4,11 @@ import asyncio
 from web_service import GITHUB_EVENT_NAME_HEADER, FOUND_WEBHOOK_HEADER, app, process
 
 
+@pytest.mark.asyncio
+async def test_index():
+    test_client = app.test_client()
+    response = await test_client.get('/')
+    assert await (response.get_json()) == {'works': True}
 
 @pytest.mark.asyncio
 async def test_unknown_webhook():

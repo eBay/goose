@@ -10,6 +10,10 @@ process = Processor('') # TODO: Config
 GITHUB_EVENT_NAME_HEADER = 'X-GitHub-Event'
 FOUND_WEBHOOK_HEADER = 'did-process'
 
+@app.route('/')
+async def index():
+    return {'works': True}
+
 @app.route('/webhook', methods=['POST'])
 async def webhook():
     # TODO: Emit metric on payload size. Github caps events at 25mb.

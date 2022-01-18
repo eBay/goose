@@ -27,6 +27,10 @@ The end goal is you simply:
 2. Check in the relevant files
 3. Profit!
 
+The service supports both "VERIFY" actions, like when a pull request is created,
+as well as "COMMIT" actions, which are when the change actually needs to take
+place. For VERIFY actions, these will be represented in the PR status.
+
 ## How?
 
 Please open a pull request to the `service-config.yaml` file. In it, provide a
@@ -36,11 +40,11 @@ Example:
 
 ```
 - name: Alarm creation
-  filename: alarms.yaml
+  filePattern: alarms.yaml
   url: my-alarm-service.example.org/create-from-yaml
 
 - name: Creation of group permissions
-  glob: **/*/OWNERS.yaml
+  filePattern: **/*/OWNERS.(json|yaml)
   includeOld: true
   url: identity-control.example.org/
 ```
@@ -50,14 +54,58 @@ When a given repository updates their `alarms.yaml` file, we get the newest
 version of that file sent to the relevant url.
 
 In the group permissions, we send over the old file in addition to the new one
-and match `OWNERS.yaml` files in any folder.
+and match `OWNERS.yaml` or `OWNERS.json` files in any folder.
 
 ## Config API
 
-@@@ TODO
+This is the format of the config in this repository to get the functionality to
+work.
+
+```
+name: A human-readable name for what the service does
+owner: An infohub id for your application so we can track down the relevant owners.
+filePattern: (optional) file you're hoping to find. This supports both exact matches as well as glob patterns (including globstar support)
+includeOld: boolean, default=false. Whether to send the old file contents in addition to the new file contents in the payload.
+url: The URL that will receive the request for processing the event.
+```
 
 ## Service Provider API
 
 This is the data format we send to the upstream systems.
 
-@@@ TODO
+```
+appId: name of app according to infohub
+eventTimestamp: when the event source happened
+source: Object
+  author: the person who performed the action
+  uri: a URI to the resource in question
+type: enum of either VERIFY or COMMIT. Verify is for pre-flight checks like pull request validations
+files: []File
+
+File:
+  filepath: full path to the file, relative to the repository root
+  matchType: enum of EXACT_MATCH or GLOB_MATCH
+  contents:
+    new: (optional) string of file contents after change
+    old: (optional) string of file contents before change
+```
+
+### Example
+```json
+{
+    "appId": "jabrahms_henrybot"
+    "eventTimestamp": "2021-12-28T11:14:37Z",
+    "source": {
+        "author": "jabrahms",
+        "uri": "https://github.corp.ebay.com/..."
+    },
+    "type": "VERIFY",
+    "files": [{
+        "filepath": "alarms.yaml",
+        "matchType": "EXACT_MATCH",
+        "contents": {
+            "new": "...contents here..."
+        }
+    }]
+}
+```
