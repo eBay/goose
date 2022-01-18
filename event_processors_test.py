@@ -15,8 +15,8 @@ def test_process_push__exactmatch(monkeypatch):
 
         def urlopen_mock(url, *args, **kwargs):
             assert url == 'https://example.org/webhook'
+        monkeypatch.setattr(ep, 'get_file_contents_at_sha', lambda x,y: {})
         monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
-
 
         ep.Processor([{'alarms': ALARM_CONFIG}]).process_push(data)
 
