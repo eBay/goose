@@ -3,6 +3,9 @@ from collections import namedtuple
 from git import Git, Repo
 import fs
 import tempfile
+import logging
+
+log = logging.getLogger(__name__)
 
 class ConfigEntry(object):
     def __init__(self, url, exact=None):
@@ -36,7 +39,7 @@ class Processor(object):
 
 
     def process_push(self, event):
-
+        log.info("Processing a push")
         latest_commit = CommitInfo(event['repository']['git_url'], event['head_commit']['id'])
 
         relevant = set()
@@ -50,7 +53,10 @@ class Processor(object):
         for url, exact_set in self.url_to_exact.items():
             exact_matches = relevant.intersection(exact_set)
             if len(exact_matches) == 0:
+                log.info("Unable to find exact matches in the payload")
                 return
+            log.info(f"Seems we've found an exact match with files: {exact_matches}")
 
             files = get_file_contents_at_sha(exact_matches, latest_commit)
+            log.info(f"file-contents: {files}. Sending it to {url}")
             request.urlopen(url, data={"files": files})

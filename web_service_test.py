@@ -8,7 +8,7 @@ from web_service import GITHUB_EVENT_NAME_HEADER, FOUND_WEBHOOK_HEADER, app, pro
 async def test_index():
     test_client = app.test_client()
     response = await test_client.get('/')
-    assert await (response.get_json()) == {'works': True}
+    assert await (response.get_json()) == {'works': 'yes'}
 
 @pytest.mark.asyncio
 async def test_unknown_webhook():
@@ -22,7 +22,7 @@ async def test_unknown_webhook():
     })
 
     assert FOUND_WEBHOOK_HEADER in response.headers, "Couldn't find {} in the headers".format(FOUND_WEBHOOK_HEADER)
-    assert response.headers[FOUND_WEBHOOK_HEADER] == 'False'
+    assert response.headers[FOUND_WEBHOOK_HEADER] == 'no'
 
 @pytest.mark.asyncio
 async def test_known_webhook(monkeypatch):
@@ -42,4 +42,4 @@ async def test_known_webhook(monkeypatch):
     })
 
     assert FOUND_WEBHOOK_HEADER in response.headers, "Couldn't find {} in the headers".format(FOUND_WEBHOOK_HEADER)
-    assert response.headers[FOUND_WEBHOOK_HEADER] == 'True'
+    assert response.headers[FOUND_WEBHOOK_HEADER] == 'yes'
