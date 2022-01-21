@@ -8,7 +8,6 @@ NO_EXACT_CONFIG = ep.ConfigEntry('https://example.org/webhook')
 NONMATCH_CONFIG = ep.ConfigEntry('https://example.org/webhook', exact=['zoomie'])
 
 
-
 def test_process_push__exactmatch(monkeypatch):
     with open('./test/push_with_commits.event.json') as f:
         data = json.loads(''.join(f.readlines()))
