@@ -93,7 +93,7 @@ File:
 ### Example
 ```json
 {
-    "appId": "jabrahms_henrybot"
+    "appId": "jabrahms_henrybot",
     "eventTimestamp": "2021-12-28T11:14:37Z",
     "source": {
         "author": "jabrahms",
