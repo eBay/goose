@@ -64,9 +64,20 @@ work.
 ```
 name: A human-readable name for what the service does
 owner: An infohub id for your application so we can track down the relevant owners.
-filePattern: (optional) file you're hoping to find. This supports both exact matches as well as glob patterns (including globstar support)
-includeOld: boolean, default=false. Whether to send the old file contents in addition to the new file contents in the payload.
 url: The URL that will receive the request for processing the event.
+filePatterns: (list of strings) files you're hoping to find. This supports both exact matches as well as glob patterns (including globstar support)
+includeOld: boolean, default=false. Whether to send the old file contents in addition to the new file contents in the payload.
+```
+
+### Example:
+
+```yaml
+name: alarms
+owner: sherlockio
+url: https://example.org/sherlock-metrics-bot/
+filePatterns:
+  - alarms.yaml
+  - alarms.yml
 ```
 
 ## Service Provider API
