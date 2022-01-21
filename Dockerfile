@@ -19,11 +19,14 @@ FROM base as test
 RUN pip3 install \
     --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org \
     --no-cache-dir -r requirements.dev.txt
-CMD ["pytest", "-v", \
-    "--cov=.", "--cov-branch", "--cov-report=term-missing", "--cov-fail-under=100", "--durations=0", \
-    "."]
+RUN pytest -v --cov=. --cov-branch --cov-report=term-missing --cov-fail-under=100 --durations=0 .
+
+# CMD ["pytest", "-v", \
+#     "--cov=.", "--cov-branch", "--cov-report=term-missing", "--cov-fail-under=100", "--durations=0", \
+#     "."]
 
 FROM base as production
+RUN echo 1
 EXPOSE 3001
 
 CMD ["hypercorn", \
