@@ -1,11 +1,9 @@
-FROM alpine:3.7 as base
+FROM hub.tess.io/tess/alpine:hardened as base
 
-# TODO: Fix this. I can't use this hardened image due to SSL issues, it seems
-# FROM hub.tess.io/tess/alpine:hardened
 
 WORKDIR /usr/src/app
+RUN apk add --no-cache python3 git py3-pip
 
-RUN apk add --no-cache python3 git
 RUN pip3 install \
     --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org \
     --upgrade pip
