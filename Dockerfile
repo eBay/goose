@@ -9,6 +9,8 @@ RUN pip3 install \
     --upgrade pip
 
 COPY . .
+RUN rm -rf .git/
+
 RUN pip3 install \
     --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org \
     --no-cache-dir -r requirements.txt
