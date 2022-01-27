@@ -120,3 +120,9 @@ File:
     }]
 }
 ```
+
+# Misc
+
+Logo was provided by tubagus.zainal.riffandi via <a
+href="https://www.vecteezy.com/free-vector/web">Web Vectors by Vecteezy</a>. It
+is usable with attribution and I thought it was cute. :)
