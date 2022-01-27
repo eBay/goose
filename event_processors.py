@@ -43,13 +43,15 @@ class Processor(object):
         latest_commit = CommitInfo(event['repository']['git_url'], event['head_commit']['id'])
 
         relevant = set()
-        for commit in event.get('commits', []):
+        commits = event.get('commits', [])
+        for commit in commits:
             relevant |= set(
                 commit['added'] +
                 commit['removed'] +
                 commit['modified']
             )
 
+        files_payload = []
         for url, exact_set in self.url_to_exact.items():
             exact_matches = relevant.intersection(exact_set)
             if len(exact_matches) == 0:
@@ -58,5 +60,18 @@ class Processor(object):
             log.info(f"Seems we've found an exact match with files: {exact_matches}")
 
             files = get_file_contents_at_sha(exact_matches, latest_commit)
+
             log.info(f"file-contents: {files}. Sending it to {url}")
-            request.urlopen(url, data={"files": files})
+            files_payload += [{'filepath': x,
+                               'matchType': 'EXACT_MATCH',
+                               'contents': {'new': y},
+                               } for x,y in files.items()]
+        data={
+            "files": files_payload,
+            "eventTimestamp": commits[0]['timestamp'],
+            "type": "COMMIT",
+            "source": {
+                "uri": event['repository']['url']
+            }
+        }
+        request.urlopen(url, data=data)

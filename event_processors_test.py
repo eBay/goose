@@ -55,7 +55,15 @@ def test_process_push__sends_content(monkeypatch):
 
         def urlopen_mock(url, *args, **kwargs):
             assert 'data' in kwargs
-            assert kwargs['data']['files']['alarms.yml'] == "alarm content"
+            assert kwargs['data']['eventTimestamp'] == '2022-01-13T15:56:21-08:00'
+            source = kwargs['data']['source']
+            assert source['uri'] == 'https://github.corp.ebay.com/jabrahms/henrybot'
+            assert kwargs['data']['type'] == 'COMMIT'
+            item = kwargs['data']['files'][0]
+            assert item['filepath'] == 'alarms.yml'
+            assert item['matchType'] == 'EXACT_MATCH'
+            assert item['contents']['new'] == "alarm content"
+            assert 'old' not in item['contents']
         monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
         monkeypatch.setattr(ep, 'get_file_contents_at_sha', lambda x,y: {
             'alarms.yml': "alarm content"
