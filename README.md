@@ -1,6 +1,8 @@
-# Henrybot, the github event dispatcher
+<p align="center">
+  <img src="./henrybot.png" width="200" />
+</p>
 
-![](./henrybot.png)
+# Henrybot, the github event dispatcher
 
 Henrybot is a tool which simplifies gitops by using offering a mapping between
 "file globs I care about" and "service to call with those files".
