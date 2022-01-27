@@ -9,6 +9,7 @@ RUN pip3 install \
     --upgrade pip
 
 COPY . .
+RUN git log --pretty=oneline --max-count 1 > git-info.txt
 RUN rm -rf .git/
 
 RUN pip3 install \

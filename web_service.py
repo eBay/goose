@@ -2,10 +2,15 @@ from quart import Quart, request
 from event_processors import Processor, ConfigEntry
 import logging
 import json
+import os
 
 logging.basicConfig(level=logging.INFO)
 
 log = logging.getLogger(__name__)
+commit_info = None
+if os.path.exists('./git-info.txt'):
+    with open('./git-info.txt') as f:
+        commit_info = ''.join(f.readlines())
 
 app = Quart(__name__)
 
@@ -20,7 +25,7 @@ FOUND_WEBHOOK_HEADER = 'did-process'
 @app.route('/')
 async def index():
     log.info("Index")
-    return "works"
+    return f"works: {commit_info}"
 
 @app.route('/webhook', methods=['POST'])
 async def webhook():
