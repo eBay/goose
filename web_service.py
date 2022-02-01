@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 commit_info = None
 if os.path.exists('./git-info.txt'):
-    with open('./git-info.txt') as f:
+    with open('./git-info.txt') as f: # pragma: no cover
         commit_info = ''.join(f.readlines())
 
 app = Quart(__name__)
