@@ -56,7 +56,8 @@ class Processor(object):
             exact_matches = relevant.intersection(exact_set)
             if len(exact_matches) == 0:
                 log.info("Unable to find exact matches in the payload")
-                return
+                continue
+
             log.info(f"Seems we've found an exact match with files: {exact_matches}")
 
             files = get_file_contents_at_sha(exact_matches, latest_commit)
