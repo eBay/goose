@@ -79,6 +79,31 @@ def test_process_push__sends_content(monkeypatch):
 
         ep.Processor([{'alarms': ALARM_CONFIG}]).process_push(data)
 
+def test_pr__excludes_irrelevant_events():
+    with open('./test/pr.event.json') as f:
+        data = json.loads(''.join(f.readlines()))
+
+    data['action'] = 'assigned'
+    retval = ep.Processor([{'alarms': ALARM_CONFIG}]).process_pull_request(data)
+    assert retval == False, "Shouldn't have a match since the action isn't correct"
+
+def test_pr__sends_update_for_known_file(monkeypatch):
+    with open('./test/pr.event.json') as f:
+        data = json.loads(''.join(f.readlines()))
+
+    def urlopen_mock(url, *args, **kwargs):
+        assert True, "Should have called the service"
+    monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
+
+    mm = MagicMock()
+    mm().files_changed.return_value = {'alarms.yml'}
+    mm().get_file_contents_at_latest.return_value = {'alarms.yml': 'file contents'}
+    monkeypatch.setattr(ep, 'CommitRange', mm)
+
+    retval = ep.Processor([{'alarms': ALARM_CONFIG}]).process_pull_request(data)
+    assert retval == True, "Should match"
+
+
 def test_raw_update_function(monkeypatch):
     def urlopen_mock(url, *args, **kwargs):
         assert True, "Should have called the service"
@@ -91,7 +116,7 @@ def test_raw_update_function(monkeypatch):
     rng.files_changed.return_value = {'alarms.yml'}
     rng.get_file_contents_at_latest.return_value = {'alarms.yml': 'file contents'}
 
-    retval = ep.Processor([{'alarms': ALARM_CONFIG}])._send_update(rng, outboundType='VERIFY')
+    retval = ep.Processor([{'alarms': ALARM_CONFIG}])._send_update(rng, outboundType='VERIFY', eventTimestamp='')
     assert retval == True
 
 
@@ -113,5 +138,5 @@ def test_raw_update__multiple_configs(monkeypatch):
         {'tst': NO_EXACT_CONFIG},
     ])
 
-    retval = processor._send_update(rng, outboundType='VERIFY')
+    retval = processor._send_update(rng, outboundType='VERIFY', eventTimestamp='')
     assert retval == True

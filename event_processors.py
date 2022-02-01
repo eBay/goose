@@ -118,3 +118,22 @@ class Processor(object):
             outboundType='COMMIT',
             eventTimestamp=event['repository']['updated_at'],
         )
+
+    def process_pull_request(self, event):
+        """
+        https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
+        """
+        if event['action'] not in ("opened", "reopened", "synchronize"):
+            return False
+
+        commitRange = CommitRange(
+            event['repository']['git_url'],
+            event['pull_request']['base']['sha'],
+            event['pull_request']['head']['sha'],
+        )
+
+        return self._send_update(
+            commitRange,
+            outboundType='VERIFY',
+            eventTimestamp=event['pull_request']['updated_at'],
+        )
