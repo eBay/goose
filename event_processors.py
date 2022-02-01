@@ -8,26 +8,57 @@ import logging
 log = logging.getLogger(__name__)
 
 class ConfigEntry(object):
-    def __init__(self, url, exact=None):
+    def __init__(self, name, url, exact=None):
+        self.name = name
         self.url = url
         self.exact = exact or []
 
-CommitInfo = namedtuple('CommitInfo', ['repo_url', 'sha'])
 
-def get_file_contents_at_sha(files, commit_info):
-    output = {}
-    # map of filename to file contents
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        # TODO: shallower clone, ideally.
-        repo = Repo.clone_from(commit_info.repo_url, tmpdirname)
-        commit = repo.commit(commit_info.sha)
-        for f in files:
+class CommitRange(object):
+    def __init__(self, repo_url, start, end):
+        self.repo_url = repo_url
+        self.start = start.decode('utf-8')
+        self.end = end.decode('utf-8')
+        self.repo = None
+        self.tmpdir = None
+
+    def _get_git_repo(self):
+        if self.repo is None:
+            # setup clone stuff.
+            self.tmpdir = tempfile.TemporaryDirectory()
+
+            # TODO: shallower clone, ideally.
+            self.repo = Repo.clone_from(self.repo_url, self.tmpdir.name)
+        return self.repo
+
+    def files_changed(self):
+        repo = self._get_git_repo()
+        head_commit = repo.commit(self.end)
+        base_commit = repo.commit(self.start)
+
+        changed = set()
+        diffs = head_commit.diff(base_commit)
+        for diff in diffs:
+            # in the case of a rename, we want to know if either side has
+            # the file name we care about.
+            changed |= {diff.a_path, diff.b_path}
+
+        return changed
+
+    def get_file_contents_at_latest(self, filenames):
+        repo = self._get_git_repo()
+        output = {}
+        commit = repo.commit(self.end)
+        for f in filenames:
             blob = commit.tree.join(f)
             # TODO: NPE?
             data = ''.join([x.decode('utf-8') for x in blob.data_stream.stream.readlines()])
             output[f] = data
+        return output
 
-    return output
+    def __del__(self):
+        del self.tmpdir  # not sure if this is necessary to clean up the temp file
+
 
 class Processor(object):
     def __init__(self, config):
@@ -35,24 +66,13 @@ class Processor(object):
         self.url_to_exact = {}
         for obj in config:
             for name, cfg in obj.items():
-                self.url_to_exact[cfg.url] = set(cfg.exact)
+                self.url_to_exact[cfg.name] = (cfg.url, set(cfg.exact))
 
-
-    def process_push(self, event):
-        log.info("Processing a push")
-        latest_commit = CommitInfo(event['repository']['git_url'], event['head_commit']['id'])
-
-        relevant = set()
-        commits = event.get('commits', [])
-        for commit in commits:
-            relevant |= set(
-                commit['added'] +
-                commit['removed'] +
-                commit['modified']
-            )
+    def _send_update(self, commitRange, outboundType, eventTimestamp):
+        relevant = commitRange.files_changed()
 
         files_payload = []
-        for url, exact_set in self.url_to_exact.items():
+        for url, exact_set in self.url_to_exact.values():
             exact_matches = relevant.intersection(exact_set)
             if len(exact_matches) == 0:
                 log.info("Unable to find exact matches in the payload")
@@ -60,19 +80,41 @@ class Processor(object):
 
             log.info(f"Seems we've found an exact match with files: {exact_matches}")
 
-            files = get_file_contents_at_sha(exact_matches, latest_commit)
+            files = commitRange.get_file_contents_at_latest(exact_matches)
 
             log.info(f"file-contents: {files}. Sending it to {url}")
             files_payload += [{'filepath': x,
                                'matchType': 'EXACT_MATCH',
                                'contents': {'new': y},
-                               } for x,y in files.items()]
+                               } for x, y in files.items()]
+
+        if len(files_payload) == 0:
+            return False
+
         data={
             "files": files_payload,
-            "eventTimestamp": commits[0]['timestamp'],
-            "type": "COMMIT",
+            "eventTimestamp": eventTimestamp,
+            "type": outboundType,
             "source": {
-                "uri": event['repository']['url']
+                "uri": commitRange.repo_url,
             }
         }
         request.urlopen(url, data=data)
+        return True
+
+    def process_push(self, event):
+        """
+        https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#push
+        """
+
+        log.info("Processing a push")
+
+        commitRange = CommitRange(event['repository']['git_url'],
+                                  event['before'],
+                                  event['after'])
+
+        return self._send_update(
+            commitRange,
+            outboundType='COMMIT',
+            eventTimestamp=event['repository']['updated_at'],
+        )

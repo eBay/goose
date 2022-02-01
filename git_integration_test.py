@@ -3,18 +3,38 @@ from git import Git, Repo
 import tempfile
 import os
 import pytest
+import subprocess
+
 
 @pytest.mark.slow
-def test_git_file_contents():
+def test_git():
     with tempfile.TemporaryDirectory() as tmpdir:
-        repo = Repo.init(tmpdir)
-        new_file = os.path.join(tmpdir, 'myfile')
-        with open(new_file, 'w') as f:
-            f.write("WORKS")
-        repo.index.add([new_file])
-        commit = repo.index.commit("Added new file")
-        commit_info = ep.CommitInfo('file://'+ tmpdir, commit.hexsha)
+        for cmd in [
+                'git init',
+                'echo 1 > first',
+                'git add first',
+                'git commit -am first',
+                'echo 2 > second',
+                'git add second',
+                'git commit -am second',
+                'echo 3 > second',
+                'git add second',
+                'git commit -am update-second',
+                'rm first',
+                'git add first',
+                'git commit -am remove-first',
+        ]:
+            subprocess.run(cmd, cwd=tmpdir, shell=True, check=True)
 
 
-        output = ep.get_file_contents_at_sha(['myfile'], commit_info)
-        assert output['myfile'] == 'WORKS'
+        result = subprocess.run('git log --pretty=%H', shell=True, cwd=tmpdir, capture_output=True, check=True)
+        shas = result.stdout.split()
+
+        latestCommit = shas[0]
+        firstCommit = shas[-1]
+
+        # NOTE: The file git repo in the temp directory here gets re-cloned by the underlying code.
+        commit_range = ep.CommitRange('file://'+ tmpdir, firstCommit, latestCommit)
+
+        assert commit_range.files_changed() == {'first', 'second'}
+        assert commit_range.get_file_contents_at_latest(['second']) == {'second': '3\n'}

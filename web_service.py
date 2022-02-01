@@ -16,7 +16,7 @@ app = Quart(__name__)
 
 # TODO: per-environment config
 process = Processor([{
-    'testing': ConfigEntry('http://example.org/url')
+    'testing': ConfigEntry('example', 'http://example.org/url')
 }])
 
 GITHUB_EVENT_NAME_HEADER = 'X-GitHub-Event'
