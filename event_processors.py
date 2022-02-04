@@ -4,6 +4,7 @@ from git import Git, Repo
 import fs
 import tempfile
 import logging
+import json
 
 log = logging.getLogger(__name__)
 
@@ -99,7 +100,21 @@ class Processor(object):
                 "uri": commitRange.repo_url,
             }
         }
-        request.urlopen(url, data=data)
+
+        log.info(f"Calling {url} with data: {data}")
+        req = request.Request(
+            url,
+            data=bytes(json.dumps(data), encoding='utf-8'),
+            headers={
+                'content-type': 'application/json'
+            },
+            method='POST',
+        )
+        response = request.urlopen(req)
+        log.debug(f"response headers: {response.headers}")
+        if response.status >= 400:
+            txt = ''.join([x.decode('utf-8') for x in response.readlines()])
+            log.warn(f"Failure on http call: {txt}")
         return True
 
     def process_push(self, event):
