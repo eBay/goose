@@ -30,8 +30,8 @@ def test_git():
         result = subprocess.run('git log --pretty=%H', shell=True, cwd=tmpdir, capture_output=True, check=True)
         shas = result.stdout.split()
 
-        latestCommit = shas[0]
-        firstCommit = shas[-1]
+        latestCommit = shas[0].decode('utf-8')
+        firstCommit = shas[-1].decode('utf-8')
 
         # NOTE: The file git repo in the temp directory here gets re-cloned by the underlying code.
         commit_range = ep.CommitRange('file://'+ tmpdir, firstCommit, latestCommit)

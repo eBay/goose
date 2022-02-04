@@ -17,8 +17,8 @@ class ConfigEntry(object):
 class CommitRange(object):
     def __init__(self, repo_url, start, end):
         self.repo_url = repo_url
-        self.start = start.decode('utf-8')
-        self.end = end.decode('utf-8')
+        self.start = start
+        self.end = end
         self.repo = None
         self.tmpdir = None
 
