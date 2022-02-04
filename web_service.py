@@ -16,7 +16,12 @@ app = Quart(__name__)
 
 # TODO: per-environment config
 process = Processor([{
-    'testing': ConfigEntry('example', 'http://example.org/url')
+    # This is a service that's explicitly setup as a test for henrybot
+    'readme-testing': ConfigEntry(
+        'readmetests',
+        'http://henrybotreceiver-dev-henrybot-receiver.istio-dev.svc.130.tess.io/incoming',
+        ['README.md'],
+    )
 }])
 
 GITHUB_EVENT_NAME_HEADER = 'X-GitHub-Event'
