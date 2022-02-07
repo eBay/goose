@@ -124,7 +124,7 @@ class Processor(object):
 
         log.info("Processing a push")
 
-        commitRange = CommitRange(event['repository']['git_url'],
+        commitRange = CommitRange(event['repository']['clone_url'],
                                   event['before'],
                                   event['after'])
 
@@ -142,7 +142,7 @@ class Processor(object):
             return False
 
         commitRange = CommitRange(
-            event['repository']['git_url'],
+            event['repository']['clone_url'],
             event['pull_request']['base']['sha'],
             event['pull_request']['head']['sha'],
         )
