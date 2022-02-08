@@ -12,6 +12,9 @@ GITHUB_USERNAME = os.environ.get('GITHUB_USERNAME')
 GITHUB_PASSWORD = os.environ.get('GITHUB_PASSWORD')
 
 def create_authenticated_repo_url(url):
+    if GITHUB_PASSWORD is None and GITHUB_USERNAME is None:
+        log.warning("Not authenticating request. Unknown github credentials")
+        return url
     parsed = parse.urlparse(url)
     assert parsed.username is None
     assert parsed.password is None
