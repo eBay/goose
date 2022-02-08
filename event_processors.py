@@ -125,7 +125,7 @@ class Processor(object):
         log.debug(f"response headers: {response.headers}")
         if response.status >= 400:
             txt = ''.join([x.decode('utf-8') for x in response.readlines()])
-            log.warn(f"Failure on http call: {txt}")
+            log.warning(f"Failure on http call: {txt}")
         return True
 
     def process_push(self, event):
