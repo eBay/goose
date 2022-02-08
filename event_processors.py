@@ -1,12 +1,23 @@
-from urllib import request
+from urllib import request, parse
 from collections import namedtuple
 from git import Git, Repo
+import os
 import fs
 import tempfile
 import logging
 import json
 
 log = logging.getLogger(__name__)
+GITHUB_USERNAME = os.environ.get('GITHUB_USERNAME')
+GITHUB_PASSWORD = os.environ.get('GITHUB_PASSWORD')
+
+def create_authenticated_repo_url(url):
+    parsed = parse.urlparse(url)
+    assert parsed.username is None
+    assert parsed.password is None
+    updated = parsed._replace(netloc=f"{GITHUB_USERNAME}:{GITHUB_PASSWORD}@{parsed.netloc}")
+    return parse.urlunparse(updated)
+
 
 class ConfigEntry(object):
     def __init__(self, name, url, exact=None):
@@ -122,11 +133,15 @@ class Processor(object):
         https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#push
         """
 
+
+
         log.info("Processing a push")
 
-        commitRange = CommitRange(event['repository']['clone_url'],
-                                  event['before'],
-                                  event['after'])
+        commitRange = CommitRange(
+            create_authenticated_repo_url(event['repository']['clone_url']),
+            event['before'],
+            event['after']
+        )
 
         return self._send_update(
             commitRange,
@@ -142,7 +157,7 @@ class Processor(object):
             return False
 
         commitRange = CommitRange(
-            event['repository']['clone_url'],
+            create_authenticated_repo_url(event['repository']['clone_url']),
             event['pull_request']['base']['sha'],
             event['pull_request']['head']['sha'],
         )

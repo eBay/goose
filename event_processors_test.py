@@ -1,6 +1,7 @@
 import urllib.request
 from http.client import HTTPResponse
 import json
+import os
 
 from unittest.mock import MagicMock, Mock
 import event_processors as ep
@@ -182,3 +183,9 @@ def test_raw_update__multiple_configs(monkeypatch):
 
     retval = processor._send_update(rng, outboundType='VERIFY', eventTimestamp='')
     assert retval == True
+
+def test_auth_repo_url(monkeypatch):
+    monkeypatch.setattr(ep, 'GITHUB_USERNAME', 'test')
+    monkeypatch.setattr(ep, 'GITHUB_PASSWORD', 'value')
+    retval = ep.create_authenticated_repo_url('http://google.com')
+    assert retval == 'http://test:value@google.com'
