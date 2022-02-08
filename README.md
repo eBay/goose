@@ -35,17 +35,26 @@ place. For VERIFY actions, these will be represented in the PR status.
 
 ## How?
 
-Please open a pull request to the `service-config.yaml` file. In it, provide a
-mapping of the filenames/globs you care about alongside the url you wish us to call.
+To get started, you need to write an entry for your service in our config file,
+`service-config.yaml` (see below). When that's merged, it'll make its way to
+production and your service will start getting pings when relevant files change.
+
+## Config File
+
+This file holds the mapping of the filenames/globs you care about alongside the
+url you wish us to call. It also holds information so we can track down who a
+particular endpoint belongs to.
 
 Example:
 
 ```
 - name: Alarm creation
+  owner: vjsamuel
   filePattern: alarms.yaml
   url: my-alarm-service.example.org/create-from-yaml
 
 - name: Creation of group permissions
+  owner: jabrahms
   filePattern: **/*/OWNERS.(json|yaml)
   includeOld: true
   url: identity-control.example.org/
@@ -58,7 +67,6 @@ version of that file sent to the relevant url.
 In the group permissions, we send over the old file in addition to the new one
 and match `OWNERS.yaml` or `OWNERS.json` files in any folder.
 
-## Config API
 
 This is the format of the config in this repository to get the functionality to
 work.
@@ -123,7 +131,13 @@ File:
 }
 ```
 
-# Misc
+# FAQ
+
+## Why Henrybot?
+
+I couldn’t think of a good name for it, so I chose `henrybot` because it sounded friendly and helpful.
+
+## Logo?
 
 Logo was provided by tubagus.zainal.riffandi via <a
 href="https://www.vecteezy.com/free-vector/web">Web Vectors by Vecteezy</a>. It
