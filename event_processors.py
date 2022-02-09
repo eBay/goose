@@ -8,8 +8,18 @@ import logging
 import json
 
 log = logging.getLogger(__name__)
+
 GITHUB_USERNAME = os.environ.get('GITHUB_USERNAME')
 GITHUB_PASSWORD = os.environ.get('GITHUB_PASSWORD')
+
+if None in (GITHUB_USERNAME, GITHUB_PASSWORD):
+    try:
+        # These are placed there by the kubernetes system
+        GITHUB_USERNAME = open('/etc/secrets/GITHUB_USERNAME').read()
+        GITHUB_PASSWORD = open('/etc/secrets/GITHUB_PASSWORD').read()
+    except FileNotFoundError:
+        pass
+
 
 def create_authenticated_repo_url(url):
     if GITHUB_PASSWORD is None and GITHUB_USERNAME is None:
