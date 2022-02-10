@@ -53,7 +53,12 @@ class CommitRange(object):
             self.tmpdir = tempfile.TemporaryDirectory()
 
             # TODO: shallower clone, ideally.
-            self.repo = Repo.clone_from(self.repo_url, self.tmpdir.name)
+            self.repo = Repo.clone_from(
+                # Auth needs to happen here so we don't send repo url to
+                # upstreams
+                create_authenticated_repo_url(self.repo_url),
+                self.tmpdir.name
+            )
         return self.repo
 
     def files_changed(self):
@@ -145,13 +150,10 @@ class Processor(object):
         """
         https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#push
         """
-
-
-
         log.info("Processing a push")
 
         commitRange = CommitRange(
-            create_authenticated_repo_url(event['repository']['clone_url']),
+            event['repository']['clone_url'],
             event['before'],
             event['after']
         )
@@ -170,7 +172,7 @@ class Processor(object):
             return False
 
         commitRange = CommitRange(
-            create_authenticated_repo_url(event['repository']['clone_url']),
+            event['repository']['clone_url'],
             event['pull_request']['base']['sha'],
             event['pull_request']['head']['sha'],
         )
