@@ -2,3 +2,4 @@ gitpython
 fs
 quart
 hypercorn
+pyyaml

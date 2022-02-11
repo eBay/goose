@@ -3,6 +3,7 @@ from event_processors import Processor, ConfigEntry
 import logging
 import json
 import os
+import yaml
 
 logging.basicConfig(level=logging.INFO)
 
@@ -12,20 +13,26 @@ if os.path.exists('./git-info.txt'):
     with open('./git-info.txt') as f: # pragma: no cover
         commit_info = ''.join(f.readlines())
 
-app = Quart(__name__)
+
+with open('./service-config.yaml', 'r') as f:
+    cfg = yaml.safe_load(f)
+processor_list = []
+for entry in cfg:
+    processor_list.append({
+        entry['name']: ConfigEntry(
+            entry['name'],
+            entry['url'],
+            [x for x in entry['exactFilePatterns'] if '*' not in x],
+        )
+    })
 
 # TODO: per-environment config
-process = Processor([{
-    # This is a service that's explicitly setup as a test for henrybot
-    'readme-testing': ConfigEntry(
-        'readmetests',
-        'http://henrybotreceiver-dev-henrybot-receiver.istio-dev.svc.130.tess.io/incoming',
-        ['README.md'],
-    )
-}])
+process = Processor(processor_list)
 
 GITHUB_EVENT_NAME_HEADER = 'X-GitHub-Event'
 FOUND_WEBHOOK_HEADER = 'did-process'
+
+app = Quart(__name__)
 
 @app.route('/')
 async def index():
