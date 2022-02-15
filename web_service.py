@@ -22,7 +22,7 @@ for entry in cfg:
         entry['name']: ConfigEntry(
             entry['name'],
             entry['url'],
-            [x for x in entry['exactFilePatterns'] if '*' not in x],
+            [x for x in entry.get('filePatterns', '') if '*' not in x],
         )
     })
 
