@@ -3,3 +3,4 @@ fs
 quart
 hypercorn
 pyyaml
+python-json-logger

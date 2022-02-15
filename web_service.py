@@ -1,13 +1,26 @@
-from quart import Quart, request
-from event_processors import Processor, ConfigEntry
+import sys
 import logging
+from json_logs import JsonFormatter, get_logger
+
+log = get_logger(__name__)
+
+def uncaught_exception_handler(exctype, value, tb):
+    log.exception('Uncaught exception', extra={
+        'exctype': exctype,
+        'value': value,
+        'tb': tb
+    })
+sys.excepthook = uncaught_exception_handler
+
+
+from quart import Quart, request
+from quart.logging import serving_handler
+serving_handler.setFormatter(JsonFormatter())
+from event_processors import Processor, ConfigEntry
 import json
 import os
 import yaml
 
-logging.basicConfig(level=logging.INFO)
-
-log = logging.getLogger(__name__)
 commit_info = None
 if os.path.exists('./git-info.txt'):
     with open('./git-info.txt') as f: # pragma: no cover

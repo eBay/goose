@@ -4,10 +4,10 @@ from git import Git, Repo
 import os
 import fs
 import tempfile
-import logging
 import json
+from json_logs import JsonFormatter, get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 GITHUB_USERNAME = os.environ.get('GITHUB_USERNAME')
 GITHUB_PASSWORD = os.environ.get('GITHUB_PASSWORD')
