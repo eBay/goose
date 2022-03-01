@@ -16,5 +16,7 @@ class JsonFormatter(jsonlogger.JsonFormatter):
 
 def get_logger(name):
     logger = logging.getLogger(name)
-    logger.addHandler(logging.StreamHandler().setFormatter(JsonFormatter()))
+    handler = logging.StreamHandler()
+    handler.setFormatter(JsonFormatter())
+    logger.addHandler(handler)
     return logger
