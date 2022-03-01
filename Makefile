@@ -1,9 +1,15 @@
-install:
-	python3 -m venv .venv
-	.venv/bin/pip3 install -r requirements.txt
+venv:
+	python3 -m venv venv
+	make install
 
-tests:
-	pytest -v --cov=. --cov-branch --cov-report=term-missing --cov-fail-under=100 --durations=0 .
+install: venv
+	venv/bin/pip3 install -r requirements.txt
 
-web:
-	python web_service.py
+install_dev: venv
+	venv/bin/pip3 install -r requirements.dev.txt
+
+tests: install_dev
+	venv/bin/pytest -v --cov=. --cov-branch --cov-report=term-missing --cov-fail-under=100 --durations=0 .
+
+web: venv
+	venv/bin/python web_service.py
