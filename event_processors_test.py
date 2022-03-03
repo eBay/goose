@@ -25,6 +25,17 @@ fake_error_response.readlines.return_value = [b'it', b'works']
 
 from reporters import GithubReporter
 
+def test_commit_range__parse_url_to_owner():
+    cr = ep.CommitRange('https://github.com/ebay/thing', 'sha1', 'sha2')
+    assert cr.owner_repo == ('ebay', 'thing')
+
+def test_commit_range__parse_git_url():
+    cr = ep.CommitRange('https://github.com/ebay/thing.git', 'sha1', 'sha2')
+    assert cr.owner_repo == ('ebay', 'thing')
+
+def test_commit_range__head_sha():
+    cr = ep.CommitRange('https://github.com/ebay/thing.git', 'sha1', 'sha2')
+    assert cr.head_sha == 'sha2'
 
 def test_process_push__exactmatch(monkeypatch):
     with open('./test/push_with_commits.event.json') as f:

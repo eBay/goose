@@ -4,23 +4,7 @@ import json
 
 CommitStatus = Union[Literal['failed'], Literal['error'], Literal['success'], Literal['pending']]
 
-class Reporter(object):
-    """
-    Serves to report status events to some upstream.
-    """
-    def fail(self, service, messsage):
-        raise NotImplemented()
-
-    def error(self, service, message):
-        raise NotImplemented()
-
-    def ok(self, service):
-        raise NotImplemented()
-
-    def pending(self, service):
-        raise NotImplemented()
-
-class GithubReporter(Reporter):
+class GithubReporter(object):
     def __init__(self, commit_range):
         self.cr = commit_range
 
