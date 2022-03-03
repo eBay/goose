@@ -6,13 +6,15 @@ import fs
 import tempfile
 import json
 from json_logs import JsonFormatter, get_logger
+from reporters import GithubReporter
+from datetime import datetime
 
 log = get_logger(__name__)
 
 GITHUB_USERNAME = os.environ.get('GITHUB_USERNAME')
 GITHUB_PASSWORD = os.environ.get('GITHUB_PASSWORD')
 
-if None in (GITHUB_USERNAME, GITHUB_PASSWORD):
+if None in (GITHUB_USERNAME, GITHUB_PASSWORD): # pragma: no cover
     try:
         # These are placed there by the kubernetes system
         GITHUB_USERNAME = open('/etc/secrets/GITHUB_USERNAME').read()
@@ -38,6 +40,10 @@ class ConfigEntry(object):
         self.url = url
         self.exact = exact or []
 
+    def return_matches(self, files):
+        'Given a filename, does it match this config?'
+        return set(self.exact).intersection(files)
+
 
 class CommitRange(object):
     def __init__(self, repo_url, start, end):
@@ -46,6 +52,18 @@ class CommitRange(object):
         self.end = end
         self.repo = None
         self.tmpdir = None
+
+    @property
+    def owner_repo(self):
+        parts = parse.urlparse(self.repo_url)
+        (_, owner, repo, *rest) = parts.path.split('/')
+        if repo.endswith('.git'):
+            repo = repo[:-4]
+        return (owner, repo)
+
+    @property
+    def head_sha(self):
+        return self.end
 
     def _get_git_repo(self):
         if self.repo is None:
@@ -90,46 +108,30 @@ class CommitRange(object):
         del self.tmpdir  # not sure if this is necessary to clean up the temp file
 
 
+
 class Processor(object):
     def __init__(self, config):
         self.config = config;
-        self.url_to_exact = {}
-        for obj in config:
-            for name, cfg in obj.items():
-                self.url_to_exact[cfg.name] = (cfg.url, set(cfg.exact))
 
-    def _send_update(self, commitRange, outboundType, eventTimestamp):
-        relevant = commitRange.files_changed()
+    def _build_payload(self, matches, commitRange, eventTimestamp, outboundType, repo_url):
+        files = commitRange.get_file_contents_at_latest(matches)
 
-        files_payload = []
-        for url, exact_set in self.url_to_exact.values():
-            exact_matches = relevant.intersection(exact_set)
-            if len(exact_matches) == 0:
-                log.info("Unable to find exact matches in the payload")
-                continue
+        if type(eventTimestamp) == int:
+            eventTimestamp = datetime.fromtimestamp(eventTimestamp).isoformat()
 
-            log.info(f"Seems we've found an exact match with files: {exact_matches}")
-
-            files = commitRange.get_file_contents_at_latest(exact_matches)
-
-            log.info(f"file-contents: {files}. Sending it to {url}")
-            files_payload += [{'filepath': x,
-                               'matchType': 'EXACT_MATCH',
-                               'contents': {'new': y},
-                               } for x, y in files.items()]
-
-        if len(files_payload) == 0:
-            return False
-
-        data={
-            "files": files_payload,
+        return {
+            "files": [{'filepath': x,
+                       'matchType': 'EXACT_MATCH',
+                       'contents': {'new': y},
+                       } for x, y in files.items()],
             "eventTimestamp": eventTimestamp,
             "type": outboundType,
             "source": {
-                "uri": commitRange.repo_url,
+                "uri": repo_url,
             }
         }
 
+    def _call_service(self, url, data):
         log.info(f"Calling {url} with data: {data}")
         req = request.Request(
             url,
@@ -144,7 +146,37 @@ class Processor(object):
         if response.status >= 400:
             txt = ''.join([x.decode('utf-8') for x in response.readlines()])
             log.warning(f"Failure on http call: {txt}")
-        return True
+        return response
+
+    def _send_update(self, commitRange, outboundType, eventTimestamp):
+        '''
+        Conceptually, a request comes in. We look through our config, and find
+        out if there are any relevant matches. If there are, we send out
+        requests to upstream systems to get their info. We also report out to
+        github with status.
+        '''
+        relevant = commitRange.files_changed()
+
+        reporter = GithubReporter(commitRange)
+        found_match = False
+        for matcher in self.config:
+            service = matcher.name
+            matches = matcher.return_matches(relevant)
+            if matches:
+                found_match = True
+                reporter.pending(service)
+                payload = self._build_payload(matches, commitRange, eventTimestamp, outboundType, commitRange.repo_url)
+                response = self._call_service(matcher.url, payload)
+                body = ''.join([x.decode('utf-8') for x in response.readlines()])
+
+                if response.status >= 400 and response.status < 500:
+                    reporter.fail(service, body)
+                elif response.status >= 500:
+                    reporter.error(service, body)
+                else:
+                    reporter.ok(service)
+
+        return found_match
 
     def process_push(self, event):
         """
@@ -161,7 +193,8 @@ class Processor(object):
         return self._send_update(
             commitRange,
             outboundType='COMMIT',
-            eventTimestamp=event['repository']['updated_at'],
+            # NB: Pushed at, not updated at. https://stackoverflow.com/a/15922637/4972
+            eventTimestamp=event['repository']['pushed_at'],
         )
 
     def process_pull_request(self, event):

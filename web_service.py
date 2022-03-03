@@ -5,7 +5,7 @@ from json_logs import JsonFormatter, get_logger
 log = get_logger(__name__)
 
 def uncaught_exception_handler(exctype, value, tb):
-    log.exception('Uncaught exception', extra={
+   log.exception('Uncaught exception', extra={    # pragma: no cover
         'exctype': exctype,
         'value': value,
         'tb': tb
@@ -31,13 +31,13 @@ with open('./service-config.yaml', 'r') as f:
     cfg = yaml.safe_load(f)
 processor_list = []
 for entry in cfg:
-    processor_list.append({
-        entry['name']: ConfigEntry(
+    processor_list.append(
+        ConfigEntry(
             entry['name'],
             entry['url'],
             [x for x in entry.get('filePatterns', '') if '*' not in x],
         )
-    })
+    )
 
 # TODO: per-environment config
 process = Processor(processor_list)
