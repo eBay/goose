@@ -14,6 +14,9 @@ log = get_logger(__name__)
 GITHUB_USERNAME = os.environ.get('GITHUB_USERNAME')
 GITHUB_PASSWORD = os.environ.get('GITHUB_PASSWORD')
 
+# Magic value which is the sha of an empty tree
+EMPTY_TREE_SHA = '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
+
 if None in (GITHUB_USERNAME, GITHUB_PASSWORD): # pragma: no cover
     try:
         # These are placed there by the kubernetes system
@@ -48,7 +51,10 @@ class ConfigEntry(object):
 class CommitRange(object):
     def __init__(self, repo_url, start, end):
         self.repo_url = repo_url
-        self.start = start
+        if start == '0000000000000000000000000000000000000000':
+            self.start = EMPTY_TREE_SHA
+        else:
+            self.start = start
         self.end = end
         self.repo = None
         self.tmpdir = None
