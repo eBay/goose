@@ -10,6 +10,7 @@ install_dev: venv
 
 tests: install_dev
 	venv/bin/pytest -v --cov=. --cov-branch --cov-report=term-missing --cov-fail-under=100 --durations=0 .
+	venv/bin/mypy *.py
 
 web: venv
 	venv/bin/python web_service.py

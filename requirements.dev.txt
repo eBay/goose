@@ -4,3 +4,4 @@ pytest-cov
 pytest-asyncio
 pytest-watcher
 mypy
+types-PyYAML
