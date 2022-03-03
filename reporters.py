@@ -23,10 +23,7 @@ class GithubReporter(object):
             body['description'] = description
 
         # @@@ Give this the proper base url.
-        url = f'/repos/{owner}/{repo}/statuses/{sha}'
-        import pdb; pdb.set_trace()
-
-
+        url = f'https://example.org/repos/{owner}/{repo}/statuses/{sha}'
         req = request.Request(
             url,
             data=bytes(json.dumps(body), encoding='utf-8'),
@@ -35,6 +32,7 @@ class GithubReporter(object):
             },
             method='POST',
         )
+
         response = request.urlopen(req)
         return response
 

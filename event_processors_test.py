@@ -221,3 +221,40 @@ def test_auth_repo_url(monkeypatch):
     monkeypatch.setattr(ep, 'GITHUB_PASSWORD', 'value')
     retval = ep.create_authenticated_repo_url('http://google.com')
     assert retval == 'http://test:value@google.com'
+
+
+@pytest.mark.parametrize("code,reporter_method_called", [
+    (200, 'ok'),
+    (400,'fail'),
+    (500,'error'),
+])
+def test_update__reports_error(code, reporter_method_called, monkeypatch):
+    def urlopen_mock(request, *args, **kwargs):
+        resp = Mock(spect=HTTPResponse)
+        resp.status = code
+        resp.readlines.return_value = [b'it', b'works']
+        return resp
+
+    monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
+    reporter = MagicMock()
+    monkeypatch.setattr(ep, 'GithubReporter', reporter)
+
+    with open('./test/pr.event.json') as f:
+        data = json.loads(''.join(f.readlines()))
+
+    rng = MagicMock();
+    rng.repo_url = 'https://example.org'
+    rng.owner_repo = ('owner', 'repo')
+    rng.files_changed.return_value = {'alarms.yml'}
+    rng.get_file_contents_at_latest.return_value = {'alarms.yml': 'file contents'}
+
+    processor = ep.Processor([
+        NONMATCH_CONFIG,
+        ALARM_CONFIG,
+        NO_EXACT_CONFIG,
+    ])
+
+    processor._send_update(rng, outboundType='VERIFY', eventTimestamp='')
+
+    assert reporter().pending.called
+    assert getattr(reporter(), reporter_method_called).called
