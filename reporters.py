@@ -5,8 +5,9 @@ import json
 CommitStatus = Union[Literal['failed'], Literal['error'], Literal['success'], Literal['pending']]
 
 class GithubReporter(object):
-    def __init__(self, commit_range):
+    def __init__(self, commit_range, statuses_url):
         self.cr = commit_range
+        self.statuses_url = statuses_url
 
     def _req(self, service, state: CommitStatus, description: Optional[str]):
         owner, repo = self.cr.owner_repo
@@ -22,10 +23,8 @@ class GithubReporter(object):
         if description:
             body['description'] = description
 
-        # @@@ Give this the proper base url.
-        url = f'https://example.org/repos/{owner}/{repo}/statuses/{sha}'
         req = request.Request(
-            url,
+            self.statuses_url.replace('{sha}', sha),
             data=bytes(json.dumps(body), encoding='utf-8'),
             headers={
                 'content-type': 'application/json'

@@ -167,7 +167,7 @@ def test_raw_update_function(monkeypatch):
     rng.files_changed.return_value = {'alarms.yml'}
     rng.get_file_contents_at_latest.return_value = {'alarms.yml': 'file contents'}
 
-    retval = ep.Processor([ALARM_CONFIG])._send_update(rng, outboundType='VERIFY', eventTimestamp='')
+    retval = ep.Processor([ALARM_CONFIG])._send_update(rng, outboundType='VERIFY', eventTimestamp='', status_url='')
     assert retval == True
 
 
@@ -187,7 +187,7 @@ def test_raw_update__error(monkeypatch):
     rng.files_changed.return_value = {'alarms.yml'}
     rng.get_file_contents_at_latest.return_value = {'alarms.yml': 'file contents'}
 
-    retval = ep.Processor([ALARM_CONFIG])._send_update(rng, outboundType='VERIFY', eventTimestamp='')
+    retval = ep.Processor([ALARM_CONFIG])._send_update(rng, outboundType='VERIFY', eventTimestamp='', status_url='')
     assert retval == True
 
 
@@ -213,7 +213,7 @@ def test_raw_update__multiple_configs(monkeypatch):
         NO_EXACT_CONFIG,
     ])
 
-    retval = processor._send_update(rng, outboundType='VERIFY', eventTimestamp='')
+    retval = processor._send_update(rng, outboundType='VERIFY', eventTimestamp='', status_url='')
     assert retval == True
 
 def test_auth_repo_url(monkeypatch):
@@ -254,7 +254,7 @@ def test_update__reports_error(code, reporter_method_called, monkeypatch):
         NO_EXACT_CONFIG,
     ])
 
-    processor._send_update(rng, outboundType='VERIFY', eventTimestamp='')
+    processor._send_update(rng, outboundType='VERIFY', eventTimestamp='', status_url='')
 
     assert reporter().pending.called
     assert getattr(reporter(), reporter_method_called).called

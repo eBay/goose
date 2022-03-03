@@ -148,7 +148,7 @@ class Processor(object):
             log.warning(f"Failure on http call: {txt}")
         return response
 
-    def _send_update(self, commitRange, outboundType, eventTimestamp):
+    def _send_update(self, commitRange, outboundType, eventTimestamp, status_url):
         '''
         Conceptually, a request comes in. We look through our config, and find
         out if there are any relevant matches. If there are, we send out
@@ -157,7 +157,7 @@ class Processor(object):
         '''
         relevant = commitRange.files_changed()
 
-        reporter = GithubReporter(commitRange)
+        reporter = GithubReporter(commitRange, status_url)
         found_match = False
         for matcher in self.config:
             service = matcher.name
@@ -195,6 +195,7 @@ class Processor(object):
             outboundType='COMMIT',
             # NB: Pushed at, not updated at. https://stackoverflow.com/a/15922637/4972
             eventTimestamp=event['repository']['pushed_at'],
+            status_url=event['repository']['statuses_url'],
         )
 
     def process_pull_request(self, event):
@@ -214,4 +215,5 @@ class Processor(object):
             commitRange,
             outboundType='VERIFY',
             eventTimestamp=event['pull_request']['updated_at'],
+            status_url=event['repository']['statuses_url'],
         )

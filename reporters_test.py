@@ -4,9 +4,11 @@ from event_processors import CommitRange
 from reporters import GithubReporter
 import json
 
+status_url = 'https://github.corp.ebay.com/api/v3/repos/jabrahms/henrybot/statuses/{sha}'
+
 def test_reporter__service_call(monkeypatch):
     cr = CommitRange('https://github.com/ebay/test-repo', 'start', 'end')
-    reporter = GithubReporter(cr)
+    reporter = GithubReporter(cr, status_url)
 
     def urlopen_mock(req, *args, **kwargs):
         data = json.loads(req.data)
@@ -23,7 +25,7 @@ def test_reporter__service_call(monkeypatch):
 
 def test_reporter__service_call_pending(monkeypatch):
     cr = CommitRange('https://github.com/ebay/test-repo', 'start', 'end')
-    reporter = GithubReporter(cr)
+    reporter = GithubReporter(cr, status_url)
 
     def urlopen_mock(req, *args, **kwargs):
         data = json.loads(req.data)
@@ -37,7 +39,7 @@ def test_reporter__service_call_pending(monkeypatch):
 
 def test_reporter__service_call_fail(monkeypatch):
     cr = CommitRange('https://github.com/ebay/test-repo', 'start', 'end')
-    reporter = GithubReporter(cr)
+    reporter = GithubReporter(cr, status_url)
 
     def urlopen_mock(req, *args, **kwargs):
         data = json.loads(req.data)
@@ -50,7 +52,7 @@ def test_reporter__service_call_fail(monkeypatch):
 
 def test_reporter__service_call_error(monkeypatch):
     cr = CommitRange('https://github.com/ebay/test-repo', 'start', 'end')
-    reporter = GithubReporter(cr)
+    reporter = GithubReporter(cr, status_url)
 
     def urlopen_mock(req, *args, **kwargs):
         data = json.loads(req.data)
