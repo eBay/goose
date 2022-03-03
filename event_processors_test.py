@@ -59,6 +59,11 @@ def test_process_push__exactmatch(monkeypatch):
 
         ep.Processor([ALARM_CONFIG]).process_push(data)
 
+def test_process_push__delete(monkeypatch):
+    with open('./test/branch-delete.push.json') as f:
+        data = json.loads(''.join(f.readlines()))
+    assert ep.Processor([NONMATCH_CONFIG]).process_push(data) == False
+
 def test_process_push__nomatch(monkeypatch):
     with open('./test/push_with_commits.event.json') as f:
         data = json.loads(''.join(f.readlines()))
@@ -215,13 +220,6 @@ def test_raw_update__multiple_configs(monkeypatch):
 
     retval = processor._send_update(rng, outboundType='VERIFY', eventTimestamp='', status_url='')
     assert retval == True
-
-def test_auth_repo_url(monkeypatch):
-    monkeypatch.setattr(ep, 'GITHUB_USERNAME', 'test')
-    monkeypatch.setattr(ep, 'GITHUB_PASSWORD', 'value')
-    retval = ep.create_authenticated_repo_url('http://google.com')
-    assert retval == 'http://test:value@google.com'
-
 
 @pytest.mark.parametrize("code,reporter_method_called", [
     (200, 'ok'),

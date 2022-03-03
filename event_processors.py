@@ -8,33 +8,10 @@ import json
 from json_logs import JsonFormatter, get_logger
 from reporters import GithubReporter
 from datetime import datetime
+from github_client import create_authenticated_repo_url
 
 log = get_logger(__name__)
-
-GITHUB_USERNAME = os.environ.get('GITHUB_USERNAME')
-GITHUB_PASSWORD = os.environ.get('GITHUB_PASSWORD')
-
-# Magic value which is the sha of an empty tree
-EMPTY_TREE_SHA = '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
-
-if None in (GITHUB_USERNAME, GITHUB_PASSWORD): # pragma: no cover
-    try:
-        # These are placed there by the kubernetes system
-        GITHUB_USERNAME = open('/etc/secrets/GITHUB_USERNAME').read()
-        GITHUB_PASSWORD = open('/etc/secrets/GITHUB_PASSWORD').read()
-    except FileNotFoundError:
-        pass
-
-
-def create_authenticated_repo_url(url):
-    if GITHUB_PASSWORD is None and GITHUB_USERNAME is None:
-        log.warning("Not authenticating request. Unknown github credentials")
-        return url
-    parsed = parse.urlparse(url)
-    assert parsed.username is None
-    assert parsed.password is None
-    updated = parsed._replace(netloc=f"{GITHUB_USERNAME}:{GITHUB_PASSWORD}@{parsed.netloc}")
-    return parse.urlunparse(updated)
+GONE_SHA = '0000000000000000000000000000000000000000'
 
 
 class ConfigEntry(object):
@@ -51,8 +28,9 @@ class ConfigEntry(object):
 class CommitRange(object):
     def __init__(self, repo_url, start, end):
         self.repo_url = repo_url
-        if start == '0000000000000000000000000000000000000000':
-            self.start = EMPTY_TREE_SHA
+        # GitHub sends 0000 when the branch is new, for instance.
+        if start == GONE_SHA:
+            self.start = None
         else:
             self.start = start
         self.end = end
@@ -189,6 +167,10 @@ class Processor(object):
         https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#push
         """
         log.info("Processing a push")
+
+        if event['after'] == GONE_SHA:
+            # Push to delete a branch
+            return False
 
         commitRange = CommitRange(
             event['repository']['clone_url'],
