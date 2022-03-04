@@ -1,4 +1,4 @@
-import event_processors as ep
+from . import event_processors as ep
 from git import Git, Repo
 import tempfile
 import os

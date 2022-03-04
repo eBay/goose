@@ -1,4 +1,5 @@
-import github_client as gc
+from . import github_client as gc
+
 def test_auth_repo_url(monkeypatch):
     monkeypatch.setattr(gc, 'GITHUB_USERNAME', 'test')
     monkeypatch.setattr(gc, 'GITHUB_PASSWORD', 'value')

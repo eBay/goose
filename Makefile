@@ -13,4 +13,4 @@ tests: install_dev
 	venv/bin/mypy *.py
 
 web: venv
-	venv/bin/python web_service.py
+	venv/bin/python henrybot/web_service.py

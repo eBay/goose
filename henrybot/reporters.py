@@ -1,6 +1,6 @@
 from typing import Literal, Optional, Union
 from urllib import request, parse
-from github_client import github_call
+from .github_client import github_call
 import json
 
 CommitStatus = Union[Literal['failed'], Literal['error'], Literal['success'], Literal['pending']]

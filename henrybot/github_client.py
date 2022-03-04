@@ -1,5 +1,5 @@
 from urllib import request, parse
-from json_logs import get_logger
+from .json_logs import get_logger
 import base64
 import os
 import json

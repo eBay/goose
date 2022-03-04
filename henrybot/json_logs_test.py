@@ -1,5 +1,5 @@
 from unittest.mock import MagicMock
-from json_logs import JsonFormatter
+from .json_logs import JsonFormatter
 
 def test_formatter():
     jf = JsonFormatter()

@@ -1,4 +1,4 @@
-from event_processors import CommitRange
+from .event_processors import CommitRange
 
 def test_commit_range__new_branch():
     'These show up as a starting commit of 0000000'

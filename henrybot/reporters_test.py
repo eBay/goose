@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 from urllib import request, response
-from event_processors import CommitRange
-from reporters import GithubReporter
+from .event_processors import CommitRange
+from .reporters import GithubReporter
 import json
 
 status_url = 'https://github.corp.ebay.com/api/v3/repos/jabrahms/henrybot/statuses/{sha}'

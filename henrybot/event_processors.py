@@ -5,10 +5,10 @@ import os
 import fs
 import tempfile
 import json
-from json_logs import JsonFormatter, get_logger
-from reporters import GithubReporter
 from datetime import datetime
-from github_client import create_authenticated_repo_url
+from .json_logs import JsonFormatter, get_logger
+from .reporters import GithubReporter
+from .github_client import create_authenticated_repo_url
 
 log = get_logger(__name__)
 GONE_SHA = '0000000000000000000000000000000000000000'
