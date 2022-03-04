@@ -4,6 +4,7 @@ from .json_logs import JsonFormatter, get_logger
 
 log = get_logger(__name__)
 
+
 def uncaught_exception_handler(exctype, value, tb):
    log.exception('Uncaught exception', extra={    # pragma: no cover
         'exctype': exctype,
@@ -20,14 +21,16 @@ from .event_processors import Processor, ConfigEntry
 import json
 import os
 import yaml
+from pathlib import Path
 
+REPO_ROOT=Path(__file__).resolve().parent.parent
 commit_info = None
-if os.path.exists('./git-info.txt'):
-    with open('./git-info.txt') as f: # pragma: no cover
+if os.path.exists(f'{REPO_ROOT}/git-info.txt'):
+    with open(f'{REPO_ROOT}/git-info.txt') as f: # pragma: no cover
         commit_info = ''.join(f.readlines())
 
 
-with open('./service-config.yaml', 'r') as f:
+with open(f'{REPO_ROOT}/service-config.yaml', 'r') as f:
     cfg = yaml.safe_load(f)
 processor_list = []
 for entry in cfg:
