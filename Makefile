@@ -1,16 +1,16 @@
 venv:
 	python3 -m venv venv
-	make install
+	venv/bin/pip3 install -r requirements.dev.txt
 
 install: venv
 	venv/bin/pip3 install -r requirements.txt
 
-install_dev: venv
-	venv/bin/pip3 install -r requirements.dev.txt
-
-tests: install_dev
+tests: venv
 	venv/bin/pytest -v --cov=. --cov-branch --cov-report=term-missing --cov-fail-under=100 --durations=0 .
-	venv/bin/mypy *.py
+	venv/bin/mypy henrybot/*.py
+
+watch:
+	watchexec --ignore '.#.*' -e py make tests
 
 web: venv
 	venv/bin/python henrybot/web_service.py
