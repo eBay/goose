@@ -40,7 +40,7 @@ def test_commit_range__head_sha():
     assert cr.head_sha == 'sha2'
 
 def test_process_push__exactmatch(monkeypatch):
-    with open(f'{CWD}/test/push_with_commits.event.json') as f:
+    with open(f'{CWD}/fixtures/push_with_commits.event.json') as f:
         data = json.loads(''.join(f.readlines()))
 
         mm = MagicMock()
@@ -62,12 +62,12 @@ def test_process_push__exactmatch(monkeypatch):
         ep.Processor([ALARM_CONFIG]).process_push(data)
 
 def test_process_push__delete(monkeypatch):
-    with open(f'{CWD}/test/branch-delete.push.json') as f:
+    with open(f'{CWD}/fixtures/branch-delete.push.json') as f:
         data = json.loads(''.join(f.readlines()))
     assert ep.Processor([NONMATCH_CONFIG]).process_push(data) == False
 
 def test_process_push__nomatch(monkeypatch):
-    with open(f'{CWD}/test/push_with_commits.event.json') as f:
+    with open(f'{CWD}/fixtures/push_with_commits.event.json') as f:
         data = json.loads(''.join(f.readlines()))
 
 
@@ -84,7 +84,7 @@ def test_process_push__nomatch(monkeypatch):
         ep.Processor([NONMATCH_CONFIG]).process_push(data)
 
 def test_process_push__noexact(monkeypatch):
-    with open(f'{CWD}/test/push_with_commits.event.json') as f:
+    with open(f'{CWD}/fixtures/push_with_commits.event.json') as f:
         data = json.loads(''.join(f.readlines()))
 
         mm = MagicMock()
@@ -100,7 +100,7 @@ def test_process_push__noexact(monkeypatch):
         ep.Processor([NO_EXACT_CONFIG]).process_push(data)
 
 def test_process_push__sends_content(monkeypatch):
-    with open(f'{CWD}/test/push_with_commits.event.json') as f:
+    with open(f'{CWD}/fixtures/push_with_commits.event.json') as f:
         data = json.loads(''.join(f.readlines()))
 
         mm = MagicMock()
@@ -130,7 +130,7 @@ def test_process_push__sends_content(monkeypatch):
         ep.Processor([ALARM_CONFIG]).process_push(data)
 
 def test_pr__excludes_irrelevant_events():
-    with open(f'{CWD}/test/pr.event.json') as f:
+    with open(f'{CWD}/fixtures/pr.event.json') as f:
         data = json.loads(''.join(f.readlines()))
 
     data['action'] = 'assigned'
@@ -138,7 +138,7 @@ def test_pr__excludes_irrelevant_events():
     assert retval == False, "Shouldn't have a match since the action isn't correct"
 
 def test_pr__sends_update_for_known_file(monkeypatch):
-    with open(f'{CWD}/test/pr.event.json') as f:
+    with open(f'{CWD}/fixtures/pr.event.json') as f:
         data = json.loads(''.join(f.readlines()))
 
     def urlopen_mock(request, *args, **kwargs):
@@ -165,7 +165,7 @@ def test_raw_update_function(monkeypatch):
     monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
     monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
-    with open(f'{CWD}/test/pr.event.json') as f:
+    with open(f'{CWD}/fixtures/pr.event.json') as f:
         data = json.loads(''.join(f.readlines()))
 
     rng = MagicMock();
@@ -185,7 +185,7 @@ def test_raw_update__error(monkeypatch):
     monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
     monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
-    with open(f'{CWD}/test/pr.event.json') as f:
+    with open(f'{CWD}/fixtures/pr.event.json') as f:
         data = json.loads(''.join(f.readlines()))
 
     rng = MagicMock();
@@ -205,7 +205,7 @@ def test_raw_update__multiple_configs(monkeypatch):
     monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
     monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
-    with open(f'{CWD}/test/pr.event.json') as f:
+    with open(f'{CWD}/fixtures/pr.event.json') as f:
         data = json.loads(''.join(f.readlines()))
 
     rng = MagicMock();
@@ -239,7 +239,7 @@ def test_update__reports_error(code, reporter_method_called, monkeypatch):
     reporter = MagicMock()
     monkeypatch.setattr(ep, 'GithubReporter', reporter)
 
-    with open(f'{CWD}/test/pr.event.json') as f:
+    with open(f'{CWD}/fixtures/pr.event.json') as f:
         data = json.loads(''.join(f.readlines()))
 
     rng = MagicMock();
