@@ -13,4 +13,4 @@ watch:
 	watchexec --ignore '.#.*' -e py make tests
 
 web: venv
-	venv/bin/python henrybot/web_service.py
+	venv/bin/hypercorn --bind 0.0.0.0:5000 --debug henrybot.web_service:app
