@@ -66,7 +66,7 @@ async def webhook():
     log.debug(f"JSON: {json.dumps(j, indent=2)}")
 
     p = getattr(process, 'process_{}'.format(event), None)
-    log.debug(f'Has attr? {p}')
+    log.debug(f'Has attr? {p is not None}')
     processed = 'no'
     if p is not None:
         # TODO: This should likely be
