@@ -5,12 +5,13 @@ import os
 import fs
 import tempfile
 import json
+import logging
 from datetime import datetime
-from .json_logs import JsonFormatter, get_logger
 from .reporters import GithubReporter
 from .github_client import create_authenticated_repo_url
 
-log = get_logger(__name__)
+log = logging.getLogger(__name__)
+
 GONE_SHA = '0000000000000000000000000000000000000000'
 ROOT_SERVICE_NAME='henrybot'
 

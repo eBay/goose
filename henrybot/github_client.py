@@ -1,10 +1,10 @@
 from urllib import request, parse
-from .json_logs import get_logger
 import base64
 import os
 import json
+import logging
 
-log = get_logger(__name__)
+log = logging.getLogger(__name__)
 GITHUB_USERNAME = os.environ.get('GITHUB_USERNAME')
 GITHUB_PASSWORD = os.environ.get('GITHUB_PASSWORD')
 
@@ -29,6 +29,7 @@ def create_authenticated_repo_url(url):
 
 
 def github_call(url, body):
+    log.debug("github request: %s to %s", body, url)
     req = request.Request(
         url,
         data=bytes(json.dumps(body), encoding='utf-8'),

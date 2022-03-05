@@ -1,9 +1,13 @@
 import sys
 import logging
-from .json_logs import JsonFormatter, get_logger
+from pathlib import Path
+from logging.config import fileConfig
 
-log = get_logger(__name__)
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
+fileConfig(f'{REPO_ROOT}/logging.cfg')
+
+log = logging.getLogger(__name__)
 
 def uncaught_exception_handler(exctype, value, tb):
    log.exception('Uncaught exception', extra={    # pragma: no cover
@@ -15,15 +19,10 @@ sys.excepthook = uncaught_exception_handler
 
 
 from quart import Quart, request
-from quart.logging import serving_handler
-serving_handler.setFormatter(JsonFormatter())
 from .event_processors import Processor, ConfigEntry
 import json
 import os
 import yaml
-from pathlib import Path
-
-REPO_ROOT=Path(__file__).resolve().parent.parent
 commit_info = None
 if os.path.exists(f'{REPO_ROOT}/git-info.txt'):
     with open(f'{REPO_ROOT}/git-info.txt') as f: # pragma: no cover

@@ -13,10 +13,3 @@ class JsonFormatter(jsonlogger.JsonFormatter):
             log_record['level'] = log_record['level'].upper()
         else:
             log_record['level'] = record.levelname
-
-def get_logger(name):
-    logger = logging.getLogger(name)
-    handler = logging.StreamHandler()
-    handler.setFormatter(JsonFormatter())
-    logger.addHandler(handler)
-    return logger
