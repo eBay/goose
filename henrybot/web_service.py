@@ -1,3 +1,6 @@
+import json
+import os
+import yaml
 import sys
 import logging
 from pathlib import Path
@@ -6,6 +9,9 @@ from logging.config import fileConfig
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 fileConfig(f'{REPO_ROOT}/logging.cfg')
+
+from .event_processors import Processor, ConfigEntry
+from quart import Quart, request
 
 log = logging.getLogger(__name__)
 
@@ -18,11 +24,6 @@ def uncaught_exception_handler(exctype, value, tb):
 sys.excepthook = uncaught_exception_handler
 
 
-from quart import Quart, request
-from .event_processors import Processor, ConfigEntry
-import json
-import os
-import yaml
 commit_info = None
 if os.path.exists(f'{REPO_ROOT}/git-info.txt'):
     with open(f'{REPO_ROOT}/git-info.txt') as f: # pragma: no cover
