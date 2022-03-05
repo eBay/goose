@@ -12,6 +12,7 @@ from .github_client import create_authenticated_repo_url
 
 log = get_logger(__name__)
 GONE_SHA = '0000000000000000000000000000000000000000'
+ROOT_SERVICE_NAME='henrybot'
 
 
 class ConfigEntry(object):
@@ -142,6 +143,7 @@ class Processor(object):
         relevant = commitRange.files_changed()
 
         reporter = GithubReporter(commitRange, status_url)
+        reporter.pending(ROOT_SERVICE_NAME)
         found_match = False
         for matcher in self.config:
             service = matcher.name
@@ -160,6 +162,7 @@ class Processor(object):
                 else:
                     reporter.ok(service)
 
+        reporter.ok(ROOT_SERVICE_NAME)
         return found_match
 
     def process_push(self, event):
