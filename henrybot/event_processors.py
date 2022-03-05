@@ -1,4 +1,4 @@
-from urllib import request, parse
+from urllib import request, parse, error
 from collections import namedtuple
 from git import Git, Repo
 import os
@@ -26,6 +26,11 @@ class ConfigEntry(object):
         'Given a filename, does it match this config?'
         return set(self.exact).intersection(files)
 
+def prune_dotgit_suffix(s):
+    'if the string ends with .git, remove that'
+    if s.endswith('.git'):
+        return s[:-4]
+    return s
 
 class CommitRange(object):
     def __init__(self, repo_url, start, end):
@@ -43,9 +48,7 @@ class CommitRange(object):
     def owner_repo(self):
         parts = parse.urlparse(self.repo_url)
         (_, owner, repo, *rest) = parts.path.split('/')
-        if repo.endswith('.git'):
-            repo = repo[:-4]
-        return (owner, repo)
+        return (owner, prune_dotgit_suffix(repo))
 
     @property
     def head_sha(self):
@@ -106,6 +109,7 @@ class Processor(object):
             eventTimestamp = datetime.fromtimestamp(eventTimestamp).isoformat()
 
         return {
+            "app_id": "_".join(commitRange.owner_repo),
             "files": [{'filepath': x,
                        'matchType': 'EXACT_MATCH',
                        'contents': {'new': y},
@@ -113,7 +117,8 @@ class Processor(object):
             "eventTimestamp": eventTimestamp,
             "type": outboundType,
             "source": {
-                "uri": repo_url,
+                "uri": prune_dotgit_suffix(repo_url),
+                "sha": commitRange.head_sha,
             }
         }
 
@@ -129,9 +134,6 @@ class Processor(object):
         )
         response = request.urlopen(req)
         log.debug(f"response headers: {response.headers}")
-        if response.status >= 400:
-            txt = ''.join([x.decode('utf-8') for x in response.readlines()])
-            log.warning(f"Failure on http call: {txt}")
         return response
 
     def _send_update(self, commitRange, outboundType, eventTimestamp, status_url):
@@ -153,15 +155,15 @@ class Processor(object):
                 found_match = True
                 reporter.pending(service)
                 payload = self._build_payload(matches, commitRange, eventTimestamp, outboundType, commitRange.repo_url)
-                response = self._call_service(matcher.url, payload)
-                body = ''.join([x.decode('utf-8') for x in response.readlines()])
-
-                if response.status >= 400 and response.status < 500:
-                    reporter.fail(service, body)
-                elif response.status >= 500:
-                    reporter.error(service, body)
-                else:
+                # TODO: Refactor this http exception handling away when we move to requests
+                try:
+                    response = self._call_service(matcher.url, payload)
                     reporter.ok(service)
+                except error.HTTPError as e:
+                    if e.code >= 400 and e.code < 500:
+                        reporter.fail(service, e.reason)
+                    elif e.code >= 500:
+                        reporter.error(service, e.reason)
 
         reporter.ok(ROOT_SERVICE_NAME)
         return found_match

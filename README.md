@@ -98,8 +98,8 @@ This is the data format we send to the upstream systems.
 appId: name of app according to infohub
 eventTimestamp: when the event source happened
 source: Object
-  author: the person who performed the action
   uri: a URI to the resource in question
+  sha: the commit id for this change for use as a unique identifier
 type: enum of either VERIFY or COMMIT. Verify is for pre-flight checks like pull request validations
 files: []File
 
@@ -117,8 +117,8 @@ File:
     "appId": "jabrahms_henrybot",
     "eventTimestamp": "2021-12-28T11:14:37Z",
     "source": {
-        "author": "jabrahms",
-        "uri": "https://github.corp.ebay.com/..."
+        "uri": "https://github.corp.ebay.com/...",
+        "sha": "039282900a938e020c08320"
     },
     "type": "VERIFY",
     "files": [{

@@ -1,4 +1,5 @@
 import urllib.request
+from urllib.error import HTTPError
 from http.client import HTTPResponse
 from urllib import response
 from io import StringIO
@@ -20,9 +21,7 @@ fake_successful_http_response.headers = {}
 fake_successful_http_response.status = 200
 fake_successful_http_response.readlines.return_value = []
 
-fake_error_response = Mock(spect=HTTPResponse)
-fake_error_response.status = 500
-fake_error_response.readlines.return_value = [b'it', b'works']
+fake_error_response = HTTPError('url', 500, 'message', {}, StringIO())
 
 CWD = Path(__file__).resolve().parent
 
@@ -48,6 +47,7 @@ def test_process_push__exactmatch(monkeypatch):
         mm().files_changed.return_value = {'alarms.yml'}
         mm().get_file_contents_at_latest.return_value = {'alarms.yml': 'file contents'}
         mm().owner_repo = ('owner', 'repo')
+        mm().head_sha = 'sha'
         monkeypatch.setattr(ep, 'CommitRange', mm)
 
         monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
@@ -74,6 +74,7 @@ def test_process_push__nomatch(monkeypatch):
         mm = MagicMock()
         mm().files_changed.return_value = {'unknown'}
         mm().owner_repo = ('owner', 'repo')
+        mm().head_sha = 'sha'
         monkeypatch.setattr(ep, 'CommitRange', mm)
         monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
@@ -90,6 +91,7 @@ def test_process_push__noexact(monkeypatch):
         mm = MagicMock()
         mm().files_changed.return_value = {'unknown'}
         mm().owner_repo = ('owner', 'repo')
+        mm().head_sha = 'sha'
         monkeypatch.setattr(ep, 'CommitRange', mm)
         monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
@@ -107,6 +109,7 @@ def test_process_push__sends_content(monkeypatch):
         mm().repo_url = 'https://example.org'
         mm().files_changed.return_value = {'alarms.yml'}
         mm().owner_repo = ('owner', 'repo')
+        mm().head_sha = 'sha'
         mm().get_file_contents_at_latest.return_value = {'alarms.yml': 'alarm content'}
         monkeypatch.setattr(ep, 'CommitRange', mm)
         monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
@@ -148,6 +151,7 @@ def test_pr__sends_update_for_known_file(monkeypatch):
 
     mm = MagicMock()
     mm().repo_url = 'https://example.org'
+    mm().head_sha = 'sha'
     mm().owner_repo = ('owner', 'repo')
     mm().files_changed.return_value = {'alarms.yml'}
     mm().get_file_contents_at_latest.return_value = {'alarms.yml': 'file contents'}
@@ -171,6 +175,7 @@ def test_raw_update_function(monkeypatch):
     rng = MagicMock();
     rng.repo_url = 'https://example.org'
     rng.owner_repo = ('owner', 'repo')
+    rng.head_sha = 'sha'
     rng.files_changed.return_value = {'alarms.yml'}
     rng.get_file_contents_at_latest.return_value = {'alarms.yml': 'file contents'}
 
@@ -181,7 +186,7 @@ def test_raw_update_function(monkeypatch):
 def test_raw_update__error(monkeypatch):
     def urlopen_mock(request, *args, **kwargs):
         assert True, "Should have called the service"
-        return fake_error_response
+        raise fake_error_response
     monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
     monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
@@ -190,6 +195,7 @@ def test_raw_update__error(monkeypatch):
 
     rng = MagicMock();
     rng.repo_url = 'https://example.org'
+    rng.head_sha = 'sha'
     rng.owner_repo = ('owner', 'repo')
     rng.files_changed.return_value = {'alarms.yml'}
     rng.get_file_contents_at_latest.return_value = {'alarms.yml': 'file contents'}
@@ -211,6 +217,7 @@ def test_raw_update__multiple_configs(monkeypatch):
     rng = MagicMock();
     rng.repo_url = 'https://example.org'
     rng.owner_repo = ('owner', 'repo')
+    rng.head_sha = 'sha'
     rng.files_changed.return_value = {'alarms.yml'}
     rng.get_file_contents_at_latest.return_value = {'alarms.yml': 'file contents'}
 
@@ -230,6 +237,9 @@ def test_raw_update__multiple_configs(monkeypatch):
 ])
 def test_update__reports_error(code, reporter_method_called, monkeypatch):
     def urlopen_mock(request, *args, **kwargs):
+        if code >= 400:
+            fake_error_response.code = code
+            raise fake_error_response
         resp = Mock(spect=HTTPResponse)
         resp.status = code
         resp.readlines.return_value = [b'it', b'works']
@@ -244,6 +254,7 @@ def test_update__reports_error(code, reporter_method_called, monkeypatch):
 
     rng = MagicMock();
     rng.repo_url = 'https://example.org'
+    rng.head_sha = 'sha'
     rng.owner_repo = ('owner', 'repo')
     rng.files_changed.return_value = {'alarms.yml'}
     rng.get_file_contents_at_latest.return_value = {'alarms.yml': 'file contents'}
