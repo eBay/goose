@@ -3,7 +3,7 @@ from urllib import request, parse
 from .github_client import github_call
 import json
 
-CommitStatus = Union[Literal['failed'], Literal['error'], Literal['success'], Literal['pending']]
+CommitStatus = Union[Literal['failure'], Literal['error'], Literal['success'], Literal['pending']]
 
 class GithubReporter(object):
     def __init__(self, commit_range, statuses_url):
@@ -27,7 +27,7 @@ class GithubReporter(object):
         return github_call(self.statuses_url.replace('{sha}', sha), body)
 
     def fail(self, service: str, message: str):
-        self._req(service, 'failed', message)
+        self._req(service, 'failure', message)
 
     def error(self, service: str, message: str):
         self._req(service, 'error', message)
