@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="./henrybot.png" width="200" />
+  <img src="./goose.png" width="200" />
 </p>
 
-# Henrybot, the github event dispatcher
+# Goose, the git ops service.
 
-Henrybot is a tool which simplifies gitops by using offering a mapping between
+Goose is a tool which simplifies gitops by using offering a mapping between
 "file globs I care about" and "service to call with those files".
 
 ## Why?
@@ -114,7 +114,7 @@ File:
 ### Example
 ```json
 {
-    "appId": "jabrahms_henrybot",
+    "appId": "jabrahms_goose",
     "eventTimestamp": "2021-12-28T11:14:37Z",
     "source": {
         "uri": "https://github.corp.ebay.com/...",
@@ -133,9 +133,9 @@ File:
 
 # FAQ
 
-## Why Henrybot?
+## Why goose?
 
-I couldn’t think of a good name for it, so I chose `henrybot` because it sounded friendly and helpful.
+It stands for GitOpsSErvice (or git oops service, if you prefer).
 
 ## Logo?
 

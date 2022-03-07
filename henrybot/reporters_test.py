@@ -15,7 +15,7 @@ def test_reporter__service_call(monkeypatch):
         assert data['owner'] == 'ebay'
         assert data['repo'] == 'test-repo'
         assert data['sha'] == 'end'
-        assert data['context'] == 'henrybot/servicename'
+        assert data['context'] == 'goose/servicename'
         assert data['state'] == 'success'
         assert 'description' not in data
 

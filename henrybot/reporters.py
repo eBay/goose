@@ -18,7 +18,7 @@ class GithubReporter(object):
             'repo': repo,
             'sha': sha,
             'state': state,
-            'context': f'henrybot/{service}',
+            'context': f'goose/{service}',
         }
 
         if description:

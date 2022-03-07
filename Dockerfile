@@ -32,4 +32,4 @@ CMD ["hypercorn", \
     # "--error-log", "-", \
     # "--access-log", "-", \
     "--debug", \
-    "henrybot.web_service:app"]
+    "goose.web_service:app"]
