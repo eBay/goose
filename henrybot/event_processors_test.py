@@ -269,3 +269,21 @@ def test_update__reports_error(code, reporter_method_called, monkeypatch):
 
     assert reporter().pending.called
     assert getattr(reporter(), reporter_method_called).called
+
+def retest__bare():
+    assert ep.retest_matcher.match('retest') is None
+
+def retest__goose():
+    m = ep.retest_matcher.match('retest goose')
+    assert m is not None
+    assert m['subservice'] is None
+
+def retest__subservice():
+    m = ep.retest_matcher.match('retest goose/foo')
+    assert m is not None
+    assert m['subservice'] == 'foo'
+
+def retest__no_slash():
+    m = ep.retest_matcher.match('retest goosefoo')
+    assert m is not None
+    assert m['subservice'] is None

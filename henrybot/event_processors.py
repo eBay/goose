@@ -13,6 +13,7 @@ from .commits import CommitRange, prune_dotgit_suffix, sha_doesnt_exist
 log = logging.getLogger(__name__)
 
 ROOT_SERVICE_NAME = 'goose'
+retest_matcher = re.compile(f'retest (?P<root>{ROOT_SERVICE_NAME})/?(?P<subservice>\w+)')
 
 
 class ConfigEntry(object):
@@ -141,3 +142,12 @@ class Processor(object):
             eventTimestamp=event['pull_request']['updated_at'],
             status_url=event['repository']['statuses_url'],
         )
+
+    def process_issue_comment(self, event):
+        pr = event['issue']['pull_request']['url']
+        comment = event['comment']['body'].lower()
+        match = retest_matcher.match(comment)
+        if match is None:
+            return
+
+        # fetch PR
