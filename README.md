@@ -8,17 +8,17 @@ Goose is a tool which simplifies gitops by using offering a mapping between
 "file globs I care about" and "service to call with those files".
 
 ## Why?
-Internally, there are several places where we need to configure resources by
-clicking around UIs, such as alarms. This suffers from an inability to review
-the work that's done before it happens, making rollbacks more difficult and an
-inability to add automated tooling around
-it. [GitOps](https://about.gitlab.com/topics/gitops/) solves this.
+We have found examples of services which require us to configure resources by
+clicking around UIs. This suffers from an inability to review the work that's
+done before it happens, making rollbacks more difficult and an inability to add
+automated tooling around it. [GitOps](https://about.gitlab.com/topics/gitops/)
+solves this.
 
 There are some natural struggles for adopting a gitops-oriented approach. First,
-services like our alarm service would need to listen to repository webhooks
-(which are a bit of a pain to setup, especially for every repository). They'd
-also need to build functionality around checking out git repositories, which
-significantly changes the scope of their existing APIs.
+services who want to offer gitops functionality would need to listen to
+repository webhooks (which are a bit of a pain to setup, especially for every
+repository). They'd also need to build functionality around checking out git
+repositories, which significantly changes the scope of their existing APIs.
 
 To provide an easier experience for both application developers and framework
 teams, we're building an intermediary layer between the hooks that GitHub
@@ -29,9 +29,9 @@ The end goal is you simply:
 2. Check in the relevant files
 3. Profit!
 
-The service supports both "VERIFY" actions, like when a pull request is created,
-as well as "COMMIT" actions, which are when the change actually needs to take
-place. For VERIFY actions, these will be represented in the PR status.
+The service sends events for both "VERIFY" actions, like when a pull request is
+created, as well as "COMMIT" actions, which are when the change actually needs
+to take place. For VERIFY actions, these will be represented in the PR status.
 
 ## How?
 
@@ -49,7 +49,7 @@ Example:
 
 ```
 - name: Alarm creation
-  owner: vjsamuel
+  owner: vjay
   filePattern: alarms.yaml
   url: my-alarm-service.example.org/create-from-yaml
 
@@ -83,8 +83,8 @@ includeOld: boolean, default=false. Whether to send the old file contents in add
 
 ```yaml
 name: alarms
-owner: sherlockio
-url: https://example.org/sherlock-metrics-bot/
+owner: alarms-group
+url: https://example.org/alarms-metrics-bot/
 filePatterns:
   - alarms.yaml
   - alarms.yml
@@ -117,7 +117,7 @@ File:
     "appId": "jabrahms_goose",
     "eventTimestamp": "2021-12-28T11:14:37Z",
     "source": {
-        "uri": "https://github.corp.ebay.com/...",
+        "uri": "https://github-enterprise.example.com/...",
         "sha": "039282900a938e020c08320"
     },
     "type": "VERIFY",
@@ -136,9 +136,3 @@ File:
 ## Why goose?
 
 It stands for GitOpsSErvice (or git oops service, if you prefer).
-
-## Logo?
-
-Logo was provided by tubagus.zainal.riffandi via <a
-href="https://www.vecteezy.com/free-vector/web">Web Vectors by Vecteezy</a>. It
-is usable with attribution and I thought it was cute. :)
