@@ -43,7 +43,7 @@ def test_reporter__service_call_fail(monkeypatch):
 
     def urlopen_mock(req, *args, **kwargs):
         data = json.loads(req.data)
-        assert data['state'] == 'failed'
+        assert data['state'] == 'failure'
         assert data['description'] == 'message here'
 
     monkeypatch.setattr(request, 'urlopen', urlopen_mock)
