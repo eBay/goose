@@ -53,6 +53,9 @@ def test_process_push__exactmatch(monkeypatch):
         monkeypatch.setattr(ep, 'CommitRange', mm)
 
         monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
+        bn = MagicMock()
+        bn.return_value = 'main'
+        monkeypatch.setattr(ep, 'get_default_branch_name', bn)
 
         def urlopen_mock(req, *args, **kwargs):
             assert req.full_url == 'https://example.org/webhook'
@@ -80,6 +83,10 @@ def test_process_push__nomatch(monkeypatch):
         monkeypatch.setattr(ep, 'CommitRange', mm)
         monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
+        bn = MagicMock()
+        bn.return_value = 'main'
+        monkeypatch.setattr(ep, 'get_default_branch_name', bn)
+
         def urlopen_mock(url, *args, **kwargs):
             assert False, "Shouldn't have called the service"
         monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
@@ -97,6 +104,11 @@ def test_process_push__noexact(monkeypatch):
         monkeypatch.setattr(ep, 'CommitRange', mm)
         monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
+        bn = MagicMock()
+        bn.return_value = 'main'
+        monkeypatch.setattr(ep, 'get_default_branch_name', bn)
+
+
         def urlopen_mock(url, *args, **kwargs):
             assert False, "Shouldn't have called the service"
         monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
@@ -106,6 +118,7 @@ def test_process_push__noexact(monkeypatch):
 def test_process_push__sends_content(monkeypatch):
     with open(f'{CWD}/fixtures/push_with_commits.event.json') as f:
         data = json.loads(''.join(f.readlines()))
+        data['ref'] = 'refs/heads/main'
 
         mm = MagicMock()
         mm().repo_url = 'https://example.org'
@@ -115,6 +128,11 @@ def test_process_push__sends_content(monkeypatch):
         mm().get_file_contents_at_latest.return_value = {'alarms.yml': 'alarm content'}
         monkeypatch.setattr(ep, 'CommitRange', mm)
         monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
+
+        bn = MagicMock()
+        bn.return_value = 'main'
+        monkeypatch.setattr(ep, 'get_default_branch_name', bn)
+
 
         def urlopen_mock(request, *args, **kwargs):
             data = json.loads(request.data)
