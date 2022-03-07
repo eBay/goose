@@ -92,7 +92,7 @@ class Processor(object):
                 except error.HTTPError as e:
                     if e.code >= 400 and e.code < 500:
                         reporter.fail(service, e.reason)
-                    elif e.code >= 500:
+                    else:
                         reporter.error(service, e.reason)
 
         reporter.ok(ROOT_SERVICE_NAME)

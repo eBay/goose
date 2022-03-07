@@ -1,5 +1,6 @@
 import urllib.request
 from urllib.error import HTTPError
+from email.message import EmailMessage
 from http.client import HTTPResponse
 from urllib import response
 from io import StringIO
@@ -21,7 +22,8 @@ fake_successful_http_response.headers = {}
 fake_successful_http_response.status = 200
 fake_successful_http_response.readlines.return_value = []
 
-fake_error_response = HTTPError('url', 500, 'message', {}, StringIO())
+# For some reason, urllib uses EmailMessage objects for headers.
+fake_error_response = HTTPError('url', 500, 'message', EmailMessage(), None)
 
 CWD = Path(__file__).resolve().parent
 
