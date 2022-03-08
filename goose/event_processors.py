@@ -1,5 +1,7 @@
 from urllib import request, parse, error
+from http.client import HTTPResponse
 from collections import namedtuple
+from typing import List, Optional, Set, Dict, Union, Literal, Iterable, cast, Any, TypedDict
 import os
 import fs
 import tempfile
@@ -9,35 +11,58 @@ import re
 from datetime import datetime
 from .reporters import GithubReporter
 from .commits import CommitRange, prune_dotgit_suffix, sha_doesnt_exist
-from .github_client import get_default_branch_name, get_pull_request
+from .github_client import get_default_branch_name, get_pull_request, GithubPullRequestEvent
 
 log = logging.getLogger(__name__)
 
 ROOT_SERVICE_NAME = 'goose'
-retest_matcher = re.compile(r'retest (?P<root>'+ ROOT_SERVICE_NAME + r')(/(?P<subservice>\w+))?')
+retest_matcher = re.compile(r'retest (?P<root>' + ROOT_SERVICE_NAME + r')(/(?P<subservice>\w+))?')
+
+GithubPushEvent = Dict[Any, Any]
+GithubIssueCommentEvent = Dict[Any, Any]
 
 
 class ConfigEntry(object):
-    def __init__(self, name, url, exact=None):
+    def __init__(self, name: str, url: str, exact: Optional[List[str]] = None) -> None:
         self.name = name
         self.url = url
         self.exact = exact or []
 
-    def return_matches(self, files):
+    def return_matches(self, files: Iterable[str]) -> Set[str]:
         'Given a filename, does it match this config?'
         return set(self.exact).intersection(files)
+
+
+OutboundType = Union[Literal['VERIFY'], Literal['COMMIT']]
+
+class GitSource(TypedDict):
+    uri: str
+    sha: str
+
+class FileInfo(TypedDict):
+    filepath: str
+    matchType: Literal['EXACT_MATCH']
+    contents: Dict[str, str]
+
+class OutboundPayload(TypedDict):
+    app_id: str
+    files: List[FileInfo]
+    eventTimestamp: str
+    type: OutboundType
+    source: GitSource
 
 
 
 
 class Processor(object):
-    def __init__(self, config):
+    def __init__(self, config: Iterable[ConfigEntry]) -> None:
         self.config = config;
 
-    def _build_payload(self, matches, commitRange, eventTimestamp, outboundType, repo_url):
+    def _build_payload(self, matches: Iterable[str], commitRange: CommitRange,
+                       eventTimestamp: str, outboundType: OutboundType, repo_url: str) -> OutboundPayload:
         files = commitRange.get_file_contents_at_latest(matches)
 
-        if type(eventTimestamp) == int:
+        if isinstance(eventTimestamp, int):
             eventTimestamp = datetime.fromtimestamp(eventTimestamp).isoformat()
 
         return {
@@ -54,7 +79,7 @@ class Processor(object):
             }
         }
 
-    def _call_service(self, url, data):
+    def _call_service(self, url: str, data: Any) -> HTTPResponse:
         log.info(f"Calling {url} with data: {data}")
         req = request.Request(
             url,
@@ -64,11 +89,12 @@ class Processor(object):
             },
             method='POST',
         )
-        response = request.urlopen(req)
+        response: HTTPResponse = request.urlopen(req)
         log.debug(f"response headers: {response.headers}")
         return response
 
-    def _send_update(self, commitRange, outboundType, eventTimestamp, status_url, only_run=None):
+    def _send_update(self, commitRange: CommitRange, outboundType: OutboundType,
+                     eventTimestamp: str, status_url: str, only_run: Optional[List[str]]=None) -> bool:
         '''
         Conceptually, a request comes in. We look through our config, and find
         out if there are any relevant matches. If there are, we send out
@@ -102,7 +128,7 @@ class Processor(object):
         reporter.ok(ROOT_SERVICE_NAME)
         return found_match
 
-    def process_push(self, event):
+    def process_push(self, event: GithubPushEvent) -> bool:
         """
         https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#push
         """
@@ -130,7 +156,7 @@ class Processor(object):
             status_url=event['repository']['statuses_url'],
         )
 
-    def process_pull_request(self, event):
+    def process_pull_request(self, event: GithubPullRequestEvent) -> bool:
         """
         https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
         """
@@ -150,7 +176,7 @@ class Processor(object):
             status_url=event['repository']['statuses_url'],
         )
 
-    def process_issue_comment(self, event):
+    def process_issue_comment(self, event: GithubIssueCommentEvent) -> bool:
         pr = event['issue']['pull_request']['url']
         comment = event['comment']['body'].lower()
         match = retest_matcher.match(comment)

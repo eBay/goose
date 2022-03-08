@@ -1,20 +1,24 @@
 import tempfile
 from .github_client import create_authenticated_repo_url
+from typing import Tuple, Set, Dict, Iterable, Optional
 from urllib import parse
 from git import Git, Repo
 GONE_SHA = '0000000000000000000000000000000000000000'
 
-def prune_dotgit_suffix(s):
+def prune_dotgit_suffix(s: str) -> str:
     'if the string ends with .git, remove that'
     if s.endswith('.git'):
         return s[:-4]
     return s
 
-def sha_doesnt_exist(sha):
+def sha_doesnt_exist(sha: str) -> bool:
     return sha == GONE_SHA
 
 class CommitRange(object):
-    def __init__(self, repo_url, start, end):
+    repo: Optional[Repo]
+    tmpdir: Optional[tempfile.TemporaryDirectory[str]]
+
+    def __init__(self, repo_url: str, start: str, end: str) -> None:
         self.repo_url = repo_url
         # GitHub sends 0000 when the branch is new, for instance.
         if start == GONE_SHA:
@@ -26,17 +30,17 @@ class CommitRange(object):
         self.tmpdir = None
 
     @property
-    def owner_repo(self):
+    def owner_repo(self) -> Tuple[str, str]:
         parts = parse.urlparse(self.repo_url)
         (_, owner, repo, *rest) = parts.path.split('/')
         return (owner, prune_dotgit_suffix(repo))
 
     @property
-    def head_sha(self):
+    def head_sha(self) -> str:
         return self.end
 
-    def _get_git_repo(self):
-        if self.repo is None:
+    def _get_git_repo(self) -> Repo:
+        if not self.repo:
             # setup clone stuff.
             self.tmpdir = tempfile.TemporaryDirectory()
 
@@ -49,7 +53,7 @@ class CommitRange(object):
             )
         return self.repo
 
-    def files_changed(self):
+    def files_changed(self) -> Set[str]:
         repo = self._get_git_repo()
         head_commit = repo.commit(self.end)
         base_commit = repo.commit(self.start)
@@ -63,7 +67,7 @@ class CommitRange(object):
 
         return changed
 
-    def get_file_contents_at_latest(self, filenames):
+    def get_file_contents_at_latest(self, filenames: Iterable[str]) -> Dict[str, str]:
         repo = self._get_git_repo()
         output = {}
         commit = repo.commit(self.end)
@@ -74,5 +78,5 @@ class CommitRange(object):
             output[f] = data
         return output
 
-    def __del__(self):
+    def __del__(self) -> None:
         del self.tmpdir  # not sure if this is necessary to clean up the temp file

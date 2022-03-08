@@ -1,3 +1,4 @@
+from typing import NoReturn, Any
 import json
 import os
 import yaml
@@ -12,10 +13,11 @@ fileConfig(f'{REPO_ROOT}/logging.cfg')
 
 from .event_processors import Processor, ConfigEntry
 from quart import Quart, request
+from quart.wrappers import Response
 
 log = logging.getLogger(__name__)
 
-def uncaught_exception_handler(exctype, value, tb):
+def uncaught_exception_handler(exctype: Any , value: Any, tb: Any) -> Any:
    log.exception('Uncaught exception', extra={    # pragma: no cover
         'exctype': exctype,
         'value': value,
@@ -51,12 +53,12 @@ FOUND_WEBHOOK_HEADER = 'did-process'
 app = Quart(__name__)
 
 @app.route('/')
-async def index():
+async def index() -> str:
     log.info("Index")
     return f"works: {commit_info}"
 
 @app.route('/webhook', methods=['POST'])
-async def webhook():
+async def webhook() -> Response:
     log.info("webhook")
     # TODO: Emit metric on payload size. Github caps events at 25mb.
     event = request.headers.get(GITHUB_EVENT_NAME_HEADER)
@@ -75,9 +77,7 @@ async def webhook():
         processed = 'yes'
     else:
         log.debug(f"Unable to find a handler for event: {event}")
-
-
-    return {}, 200, {FOUND_WEBHOOK_HEADER: processed}
+    return Response({}, 200, {FOUND_WEBHOOK_HEADER: processed})
 
 if __name__ == '__main__':
     app.run()
