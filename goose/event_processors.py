@@ -9,12 +9,12 @@ import re
 from datetime import datetime
 from .reporters import GithubReporter
 from .commits import CommitRange, prune_dotgit_suffix, sha_doesnt_exist
-from .github_client import get_default_branch_name
+from .github_client import get_default_branch_name, get_pull_request
 
 log = logging.getLogger(__name__)
 
 ROOT_SERVICE_NAME = 'goose'
-retest_matcher = re.compile(f'retest (?P<root>{ROOT_SERVICE_NAME})/?(?P<subservice>\w+)')
+retest_matcher = re.compile(r'retest (?P<root>'+ ROOT_SERVICE_NAME + r')(/(?P<subservice>\w+))?')
 
 
 class ConfigEntry(object):
@@ -68,7 +68,7 @@ class Processor(object):
         log.debug(f"response headers: {response.headers}")
         return response
 
-    def _send_update(self, commitRange, outboundType, eventTimestamp, status_url):
+    def _send_update(self, commitRange, outboundType, eventTimestamp, status_url, only_run=None):
         '''
         Conceptually, a request comes in. We look through our config, and find
         out if there are any relevant matches. If there are, we send out
@@ -82,6 +82,8 @@ class Processor(object):
         found_match = False
         for matcher in self.config:
             service = matcher.name
+            if only_run is not None and service not in only_run:
+                continue
             matches = matcher.return_matches(relevant)
             if matches:
                 found_match = True
@@ -153,6 +155,23 @@ class Processor(object):
         comment = event['comment']['body'].lower()
         match = retest_matcher.match(comment)
         if match is None:
-            return
+            return False
+        limited_to = match.groupdict().get('subservice')
+        kwargs = {}
+        if limited_to:
+            kwargs = {'only_run': [limited_to]}
 
-        # fetch PR
+        pr_info = get_pull_request(pr)
+        commitRange = CommitRange(
+            pr_info['repository']['clone_url'],
+            pr_info['pull_request']['base']['sha'],
+            pr_info['pull_request']['head']['sha'],
+        )
+
+        return self._send_update(
+            commitRange,
+            outboundType='VERIFY',
+            eventTimestamp=pr_info['pull_request']['updated_at'],
+            status_url=pr_info['repository']['statuses_url'],
+            **kwargs
+        )

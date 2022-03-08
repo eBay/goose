@@ -47,14 +47,19 @@ def github_call(url, body):
     response = request.urlopen(req)
     return response
 
-def get_default_branch_name(owner, repo):
+def _get_json(url):
     req = request.Request(
-        f'https://github.corp.ebay.com/api/v3/repos/{owner}/{repo}',
+        url,
         headers={
             **_auth_header(),
         },
     )
     response = request.urlopen(req)
+    return json.loads(''.join([x.decode('utf-8') for x in response.readlines()]))
 
-    data = json.loads(''.join([x.decode('utf-8') for x in response.readlines()]))
+def get_default_branch_name(owner, repo):
+    data = _get_json(f'https://github.corp.ebay.com/api/v3/repos/{owner}/{repo}')
     return data['default_branch']
+
+def get_pull_request(pr_url):
+    return _get_json(pr_url)

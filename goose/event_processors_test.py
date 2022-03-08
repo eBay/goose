@@ -202,6 +202,19 @@ def test_raw_update_function(monkeypatch):
     retval = ep.Processor([ALARM_CONFIG])._send_update(rng, outboundType='VERIFY', eventTimestamp='', status_url='')
     assert retval == True
 
+def test_raw_update_function__skip_unspecified(monkeypatch):
+    monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
+
+    with open(f'{CWD}/fixtures/pr.event.json') as f:
+        data = json.loads(''.join(f.readlines()))
+
+    commitRange = MagicMock();
+
+    retval = ep.Processor([ALARM_CONFIG])._send_update(
+        commitRange, outboundType='VERIFY', eventTimestamp='', status_url='',
+        only_run=['foo'])
+    assert retval == False
+
 
 def test_raw_update__error(monkeypatch):
     def urlopen_mock(request, *args, **kwargs):
@@ -290,20 +303,70 @@ def test_update__reports_error(code, reporter_method_called, monkeypatch):
     assert reporter().pending.called
     assert getattr(reporter(), reporter_method_called).called
 
-def retest__bare():
+def test_retest__bare():
     assert ep.retest_matcher.match('retest') is None
 
-def retest__goose():
+def test_retest__goose():
     m = ep.retest_matcher.match('retest goose')
     assert m is not None
     assert m['subservice'] is None
 
-def retest__subservice():
+def test_retest__subservice():
     m = ep.retest_matcher.match('retest goose/foo')
     assert m is not None
     assert m['subservice'] == 'foo'
 
-def retest__no_slash():
+def test_retest__no_slash():
     m = ep.retest_matcher.match('retest goosefoo')
     assert m is not None
     assert m['subservice'] is None
+
+
+def test_pr_comment__not_retest():
+    event = {
+        'issue': {'pull_request': {'url': 'https://example.org'}},
+        'comment': {'body': '🎉'},
+    }
+    processor = ep.Processor([
+        NONMATCH_CONFIG,
+        ALARM_CONFIG,
+        NO_EXACT_CONFIG,
+    ])
+    assert processor.process_issue_comment(event) == False
+
+def test_pr_comment__retest_single(monkeypatch):
+    event = {
+        'issue': {'pull_request': {'url': 'https://example.org'}},
+        'comment': {'body': 'retest goose/alarms'},
+    }
+
+    gpr = MagicMock()
+    monkeypatch.setattr(ep, 'get_pull_request', gpr)
+
+    processor = ep.Processor([
+        ALARM_CONFIG,
+    ])
+
+    processor._send_update = MagicMock()
+    processor.process_issue_comment(event)
+
+    assert processor._send_update.called
+
+def test_pr_comment__retest_all(monkeypatch):
+    event = {
+        'issue': {'pull_request': {'url': 'https://example.org'}},
+        'comment': {'body': 'retest goose'},
+    }
+    gpr = MagicMock()
+    monkeypatch.setattr(ep, 'get_pull_request', gpr)
+    processor = ep.Processor([
+        NONMATCH_CONFIG,
+        ALARM_CONFIG,
+        NO_EXACT_CONFIG,
+    ])
+    processor._send_update = MagicMock()
+    processor.process_issue_comment(event)
+
+    assert processor._send_update.called
+    assert 'only_run' not in processor._send_update.call_args or \
+        processor._send_update.call_args.kwargs['only_run'] is None

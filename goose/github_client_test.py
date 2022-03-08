@@ -15,3 +15,11 @@ def test_default_branch_name(monkeypatch):
     req.urlopen.return_value.readlines.return_value = [bytes(json.dumps({'default_branch': 'main'}), 'utf-8')]
     monkeypatch.setattr(gc, 'request', req)
     assert gc.get_default_branch_name('owner', 'repo') == 'main'
+
+def test_pr_fetch(monkeypatch):
+    m = MagicMock()
+    m.return_value = 'the-json'
+    monkeypatch.setattr(gc, '_get_json', m)
+    resp = gc.get_pull_request('some url')
+    assert resp == 'the-json'
+    assert m.called_with('some-url')
