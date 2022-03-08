@@ -1,8 +1,8 @@
 FROM hub.tess.io/tess/alpine:hardened as base
 
-
 WORKDIR /usr/src/app
-RUN apk add --no-cache python3 git py3-pip
+RUN echo "@edge http://nl.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories
+RUN apk add --no-cache python3 git@edge py3-pip
 
 RUN pip3 install \
     --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org \
@@ -32,4 +32,4 @@ CMD ["hypercorn", \
     # "--error-log", "-", \
     # "--access-log", "-", \
     "--debug", \
-    "henrybot.web_service:app"]
+    "goose.web_service:app"]

@@ -27,6 +27,10 @@ def create_authenticated_repo_url(url):
     updated = parsed._replace(netloc=f"{GITHUB_USERNAME}:{GITHUB_PASSWORD}@{parsed.netloc}")
     return parse.urlunparse(updated)
 
+def _auth_header():
+    return {
+        'authorization': 'Basic %s' % (base64.b64encode(bytes(f'{GITHUB_USERNAME}:{GITHUB_PASSWORD}', 'utf-8'))).decode('utf-8'),
+    }
 
 def github_call(url, body):
     log.debug("github request: %s to %s", body, url)
@@ -35,10 +39,22 @@ def github_call(url, body):
         data=bytes(json.dumps(body), encoding='utf-8'),
         headers={
             'content-type': 'application/json',
-            'authorization': 'Basic %s' % (base64.b64encode(bytes(f'{GITHUB_USERNAME}:{GITHUB_PASSWORD}', 'utf-8'))).decode('utf-8'),
+            **_auth_header(),
         },
         method='POST',
     )
 
     response = request.urlopen(req)
     return response
+
+def get_default_branch_name(owner, repo):
+    req = request.Request(
+        f'https://github.corp.ebay.com/api/v3/repos/{owner}/{repo}',
+        headers={
+            **_auth_header(),
+        },
+    )
+    response = request.urlopen(req)
+
+    data = json.loads(''.join([x.decode('utf-8') for x in response.readlines()]))
+    return data['default_branch']

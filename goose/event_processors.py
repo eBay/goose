@@ -9,6 +9,7 @@ import re
 from datetime import datetime
 from .reporters import GithubReporter
 from .commits import CommitRange, prune_dotgit_suffix, sha_doesnt_exist
+from .github_client import get_default_branch_name
 
 log = logging.getLogger(__name__)
 
@@ -93,7 +94,7 @@ class Processor(object):
                 except error.HTTPError as e:
                     if e.code >= 400 and e.code < 500:
                         reporter.fail(service, e.reason)
-                    elif e.code >= 500:
+                    else:
                         reporter.error(service, e.reason)
 
         reporter.ok(ROOT_SERVICE_NAME)
@@ -107,6 +108,10 @@ class Processor(object):
 
         if sha_doesnt_exist(event['after']):
             # Push to delete a branch
+            return False
+
+        # If this push isn't to the default branch, we don't operate on it.
+        if event['ref'][len('refs/heads/'):] != get_default_branch_name(*event['repository']['full_name'].split('/')):
             return False
 
         commitRange = CommitRange(

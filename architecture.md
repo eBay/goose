@@ -7,15 +7,15 @@ level, it looks like this.
 ```mermaid
 sequenceDiagram
   participant G as GitHub
-  participant H as Henrybot
+  participant H as Goose
   participant A as AlarmsService
   G->>+H: PR or commit
-  H->>G: Pending status for henrybot
-  H->>G: Pending status for henrybot/alarms-service
+  H->>G: Pending status for goose
+  H->>G: Pending status for goose/alarms-service
   H->>A: Send relevant payload, if exists
   A->>H: Success or Error
-  H->>G: Success status for henrybot/alarms-service
-  H->>G: Success status for henrybot
+  H->>G: Success status for goose/alarms-service
+  H->>G: Success status for goose
   H->>-G: Done
 ```
 -->
@@ -31,7 +31,7 @@ Errors may be:
 
 For the timeout or crash case, the simplest solution is to allow users a
 mechanism to retry. This means the first thing that should happen when we're
-told about an event is to mark it as in-progress for the henrybot process using
+told about an event is to mark it as in-progress for the goose process using
 the GitHub statuses API.
 
 In order to retry, we can monitor comments to the pull request. If a user says
@@ -39,4 +39,4 @@ In order to retry, we can monitor comments to the pull request. If a user says
 
 The failure to get the initial payload is a harder problem, however. One partial
 solution is to monitor unhandled exceptions and manually (for now) redrive those
-messages (eew). The solution to this problem is tracked in [#29](https://github.corp.ebay.com/jabrahms/henrybot/issues/29).
+messages (eew). The solution to this problem is tracked in [#29](https://github.corp.ebay.com/jabrahms/goose/issues/29).
