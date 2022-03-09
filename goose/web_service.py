@@ -1,4 +1,4 @@
-from typing import NoReturn, Any
+from typing import NoReturn, Any, List
 import json
 import os
 import yaml
@@ -8,7 +8,6 @@ from pathlib import Path
 from logging.config import fileConfig
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-
 fileConfig(f'{REPO_ROOT}/logging.cfg')
 
 from .event_processors import Processor, ConfigEntry
@@ -32,20 +31,24 @@ if os.path.exists(f'{REPO_ROOT}/git-info.txt'):
         commit_info = ''.join(f.readlines())
 
 
-with open(f'{REPO_ROOT}/service-config.yaml', 'r') as f:
-    cfg = yaml.safe_load(f)
-processor_list = []
-for entry in cfg:
-    processor_list.append(
-        ConfigEntry(
-            entry['name'],
-            entry['url'],
-            [x for x in entry.get('filePatterns', '') if '*' not in x],
-        )
-    )
 
-# TODO: per-environment config
-process = Processor(processor_list)
+def get_processor_list() -> List[ConfigEntry]:
+   processor_list = []
+   config_file = os.environ.get('GOOSE_CONFIG', '/etc/goose.yaml')
+   if os.path.exists(config_file):
+      with open(config_file, 'r') as f:
+          cfg = yaml.safe_load(f)
+      for entry in cfg:
+          processor_list.append(
+              ConfigEntry(
+                  entry['name'],
+                  entry['url'],
+                  [x for x in entry.get('filePatterns', '') if '*' not in x],
+              )
+          )
+   return processor_list
+
+process = Processor(get_processor_list())
 
 GITHUB_EVENT_NAME_HEADER = 'X-GitHub-Event'
 FOUND_WEBHOOK_HEADER = 'did-process'
