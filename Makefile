@@ -6,7 +6,7 @@ typecheck: venv
 	venv/bin/mypy -m goose.web_service
 
 tests: venv
-	venv/bin/pytest -v --cov=. --cov-branch --cov-report=term-missing --cov-fail-under=100 --durations=0 .
+	venv/bin/pytest
 	make typecheck
 
 watch:
