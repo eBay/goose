@@ -27,7 +27,7 @@ teams, we're building an intermediary layer between the hooks that GitHub
 provides and the services which want to know about the changes.
 
 The end goal is you simply:
-1. Add our gitops user to your org
+1. Add our webhook & github user to your org
 2. Check in the relevant files
 3. Profit!
 
@@ -37,15 +37,32 @@ to take place. For VERIFY actions, these will be represented in the PR status.
 
 ## How?
 
-To get started, you need to write an entry for your service in our config file,
-`service-config.yaml` (see below). When that's merged, it'll make its way to
-production and your service will start getting pings when relevant files change.
+To get started, we need to build a config for when to call services and which
+services those are. We'll also need some GitHub credentials to operate.
+
+GitHub credentials can be either specified from environment variables
+(`GITHUB_USERNAME`, `GITHUB_PASSWORD`), or goose will look in the contents of
+`/etc/secrets/GITHUB_USERNAME` and `/etc/secrets/GITHUB_PASSWORD` for use with
+k8s-oriented volume mounts.
+
+To pass in a config file, goose looks at `GOOSE_CONFIG` for a file location,
+defaulting to `/etc/goose.yml`.
+
+A simple, example Dockerfile might look like:
+
+```dockerfile
+FROM hub.docker.io/ebay/goose:latest
+COPY ./service-config.yml /etc/goose.yml
+ENV GOOSE_CONFIG /etc/goose.yml
+ENV GITHUB_USERNAME myusername
+ENV GITHUB_PASSWORD very-secret
+```
 
 ## Config File
 
-This file holds the mapping of the filenames/globs you care about alongside the
-url you wish us to call. It also holds information so we can track down who a
-particular endpoint belongs to.
+The config file holds the mapping of the filenames/globs you care about
+alongside the url you wish us to call. It also holds information so we can track
+down who a particular endpoint belongs to.
 
 Example:
 
@@ -62,13 +79,11 @@ Example:
   url: identity-control.example.org/
 ```
 
-
 When a given repository updates their `alarms.yaml` file, we get the newest
 version of that file sent to the relevant url.
 
 In the group permissions, we send over the old file in addition to the new one
 and match `OWNERS.yaml` or `OWNERS.json` files in any folder.
-
 
 This is the format of the config in this repository to get the functionality to
 work.
@@ -79,17 +94,6 @@ owner: Contact information so we can track down the relevant owners.
 url: The URL that will receive the request for processing the event.
 filePatterns: (list of strings) files you're hoping to find. This supports both exact matches as well as glob patterns (including globstar support)
 includeOld: boolean, default=false. Whether to send the old file contents in addition to the new file contents in the payload.
-```
-
-### Example:
-
-```yaml
-name: alarms
-owner: alarms-group
-url: https://example.org/alarms-metrics-bot/
-filePatterns:
-  - alarms.yaml
-  - alarms.yml
 ```
 
 ## Service Provider API
