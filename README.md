@@ -6,8 +6,8 @@
 
 [![Build Status](https://app.travis-ci.com/eBay/goose.svg?token=z1Gk7JJrpVngapauqquH&branch=main)](https://app.travis-ci.com/eBay/goose)
 
-Goose is a tool which simplifies gitops by using offering a mapping between
-"file globs I care about" and "service to call with those files".
+Goose is a tool which simplifies gitops by mapping between "files/file patterns
+I care about" and "services that need to know about those changes".
 
 ## Why?
 We have found examples of services which require us to configure resources by
