@@ -27,11 +27,11 @@ class ConfigEntry(object):
     def __init__(self, name: str, url: str, exact: Optional[List[str]] = None) -> None:
         self.name = name
         self.url = url
-        self.exact = exact or []
+        self.exact = set(exact or [])
 
     def return_matches(self, files: Iterable[str]) -> Set[str]:
         'Given a filename, does it match this config?'
-        return set(self.exact).intersection(files)
+        return self.exact.intersection(files)
 
 
 OutboundType = Union[Literal['VERIFY'], Literal['COMMIT']]
