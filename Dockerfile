@@ -1,4 +1,4 @@
-FROM hub.tess.io/tess/alpine:hardened as base
+FROM alpine:latest as base
 
 WORKDIR /usr/src/app
 RUN echo "@edge http://nl.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories
