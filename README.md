@@ -4,6 +4,8 @@
 
 # Goose, the git ops service.
 
+[![Build Status](https://app.travis-ci.com/eBay/goose.svg?token=z1Gk7JJrpVngapauqquH&branch=main)](https://app.travis-ci.com/eBay/goose)
+
 Goose is a tool which simplifies gitops by using offering a mapping between
 "file globs I care about" and "service to call with those files".
 
