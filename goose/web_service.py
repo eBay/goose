@@ -52,6 +52,7 @@ process = Processor(get_processor_list())
 
 GITHUB_EVENT_NAME_HEADER = 'X-GitHub-Event'
 FOUND_WEBHOOK_HEADER = 'did-process'
+MATCHED_HEADER = 'did-match-rule'
 
 app = Quart(__name__)
 
@@ -73,15 +74,19 @@ async def webhook() -> Response:
 
     # Dispatch to a method called e.g. process_foo when the event type is "foo".
     p = getattr(process, 'process_{}'.format(event), None)
-    log.debug(f'Has attr? {p is not None}')
+    log.debug(f'Has method for the {event} event? {p is not None}')
     processed = 'no'
+    matched_rule = 'no'
     if p is not None:
-        # TODO: This should likely be
-        p((await request.get_json()))
+        if p((await request.get_json())):
+            matched_rule = 'yes'
         processed = 'yes'
     else:
         log.debug(f"Unable to find a handler for event: {event}")
-    return Response({}, 200, {FOUND_WEBHOOK_HEADER: processed})
+    return Response({}, 200, {
+       FOUND_WEBHOOK_HEADER: processed,
+       MATCHED_HEADER: matched_rule
+    })
 
 if __name__ == '__main__':
     app.run()
