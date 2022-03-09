@@ -11,6 +11,8 @@ def test_git():
     with tempfile.TemporaryDirectory() as tmpdir:
         for cmd in [
                 'git init',
+                'git config user.email "me@example.org"',
+                'git config user.name "Me"',
                 'echo 1 > first',
                 'git add first',
                 'git commit -am first',
