@@ -8,6 +8,7 @@ import tempfile
 import json
 import logging
 import re
+import pytz
 from datetime import datetime
 from .reporters import GithubReporter
 from .commits import CommitRange, prune_dotgit_suffix, sha_doesnt_exist
@@ -63,7 +64,7 @@ class Processor(object):
         files = commitRange.get_file_contents_at_latest(matches)
 
         if isinstance(eventTimestamp, int):
-            eventTimestamp = datetime.fromtimestamp(eventTimestamp).isoformat()
+            eventTimestamp = datetime.fromtimestamp(eventTimestamp, pytz.timezone("UTC")).isoformat()
 
         return {
             "app_id": "_".join(commitRange.owner_repo),

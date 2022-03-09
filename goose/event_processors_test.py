@@ -136,7 +136,7 @@ def test_process_push__sends_content(monkeypatch):
 
         def urlopen_mock(request, *args, **kwargs):
             data = json.loads(request.data)
-            assert data['eventTimestamp'] == '2022-01-13T15:56:27'
+            assert data['eventTimestamp'] == '2022-01-13T23:56:27+00:00'
             source = data['source']
             assert source['uri'] == 'https://example.org'
             assert data['type'] == 'COMMIT'
