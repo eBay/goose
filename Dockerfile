@@ -29,7 +29,5 @@ EXPOSE 3001
 
 CMD ["hypercorn", \
     "--bind", "0.0.0.0:3001", \
-    # "--error-log", "-", \
-    # "--access-log", "-", \
     "--debug", \
     "goose.web_service:app"]
