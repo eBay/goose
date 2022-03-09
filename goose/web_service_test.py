@@ -37,6 +37,7 @@ async def test_known_webhook(monkeypatch):
 
     def the_test(info):
         assert info == data
+        return False
 
     monkeypatch.setattr(ws.process, 'process_push', the_test)
 
@@ -46,6 +47,28 @@ async def test_known_webhook(monkeypatch):
 
     assert ws.FOUND_WEBHOOK_HEADER in response.headers, "Couldn't find {} in the headers".format(ws.FOUND_WEBHOOK_HEADER)
     assert response.headers[ws.FOUND_WEBHOOK_HEADER] == 'yes'
+    assert response.headers[ws.MATCHED_HEADER] == 'no'
+
+@pytest.mark.asyncio
+async def test_webhook__matches(monkeypatch):
+    test_client = ws.app.test_client()
+
+
+    with open(f'{CWD}/fixtures/push_with_commits.event.json') as f:
+        data = ''.join(f.readlines())
+
+    def the_test(info):
+        return True
+
+    monkeypatch.setattr(ws.process, 'process_push', the_test)
+
+    response = await test_client.post('/webhook', json=data, headers={
+        ws.GITHUB_EVENT_NAME_HEADER: 'push',
+    })
+
+    assert ws.FOUND_WEBHOOK_HEADER in response.headers, "Couldn't find {} in the headers".format(ws.FOUND_WEBHOOK_HEADER)
+    assert response.headers[ws.FOUND_WEBHOOK_HEADER] == 'yes'
+    assert response.headers[ws.MATCHED_HEADER] == 'yes'
 
 def test_config_loading(monkeypatch):
     mock_open = MagicMock()
@@ -66,4 +89,4 @@ def test_config_loading(monkeypatch):
     assert len(result) == 1
     assert result[0].name == 'name-here'
     assert result[0].url == 'https://example.org'
-    assert result[0].exact == ['testing']
+    assert result[0].exact == {'testing'}
