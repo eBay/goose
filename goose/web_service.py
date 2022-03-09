@@ -71,6 +71,7 @@ async def webhook() -> Response:
     j = await (request.get_json())
     log.debug(f"JSON: {json.dumps(j, indent=2)}")
 
+    # Dispatch to a method called e.g. process_foo when the event type is "foo".
     p = getattr(process, 'process_{}'.format(event), None)
     log.debug(f'Has attr? {p is not None}')
     processed = 'no'
