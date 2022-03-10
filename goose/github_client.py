@@ -13,9 +13,9 @@ GithubPullRequestEvent = Dict[Any, Any]
 if None in (GITHUB_USERNAME, GITHUB_PASSWORD):  # pragma: no cover
     try:
         # These are placed there by the kubernetes system
-        with open('/etc/secrets/GITHUB_USERNAME', 'utf-8') as f:
+        with open('/etc/secrets/GITHUB_USERNAME', 'r', encoding='utf-8') as f:
             GITHUB_USERNAME = f.read()
-        with open('/etc/secrets/GITHUB_PASSWORD', 'utf-8') as f:
+        with open('/etc/secrets/GITHUB_PASSWORD', 'r', encoding='utf-8') as f:
             GITHUB_PASSWORD = f.read()
     except FileNotFoundError:
         pass
