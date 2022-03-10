@@ -9,6 +9,7 @@ status_url = 'https://github.corp.ebay.com/api/v3/repos/jabrahms/henrybot/status
 response = namedtuple('Response', ['status_code'])
 success_response = response(200)
 
+
 def test_reporter__service_call(monkeypatch):
     cr = CommitRange('https://github.com/ebay/test-repo', 'start', 'end')
     reporter = reporters.GithubReporter(cr, status_url)
@@ -25,6 +26,7 @@ def test_reporter__service_call(monkeypatch):
     monkeypatch.setattr(reporters, 'github_call', call_mock)
 
     assert reporter.ok('servicename') == True
+
 
 def test_reporter__service_call_pending(monkeypatch):
     cr = CommitRange('https://github.com/ebay/test-repo', 'start', 'end')
@@ -52,6 +54,7 @@ def test_reporter__service_call_fail(monkeypatch):
     monkeypatch.setattr(reporters, 'github_call', call_mock)
 
     reporter.fail('servicename', 'message here')
+
 
 def test_reporter__service_call_error(monkeypatch):
     cr = CommitRange('https://github.com/ebay/test-repo', 'start', 'end')

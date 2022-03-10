@@ -3,7 +3,9 @@ from .github_client import create_authenticated_repo_url
 from typing import Tuple, Set, Dict, Iterable, Optional
 from urllib import parse
 from git import Git, Repo
+
 GONE_SHA = '0000000000000000000000000000000000000000'
+
 
 def prune_dotgit_suffix(s: str) -> str:
     'if the string ends with .git, remove that'
@@ -11,8 +13,10 @@ def prune_dotgit_suffix(s: str) -> str:
         return s[:-4]
     return s
 
+
 def sha_doesnt_exist(sha: str) -> bool:
     return sha == GONE_SHA
+
 
 class CommitRange(object):
     repo: Optional[Repo]
@@ -49,7 +53,7 @@ class CommitRange(object):
                 # Auth needs to happen here so we don't send repo url to
                 # upstreams
                 create_authenticated_repo_url(self.repo_url),
-                self.tmpdir.name
+                self.tmpdir.name,
             )
         return self.repo
 

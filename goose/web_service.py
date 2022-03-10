@@ -16,37 +16,36 @@ from quart.wrappers import Response
 
 log = logging.getLogger(__name__)
 
-def uncaught_exception_handler(exctype: Any , value: Any, tb: Any) -> Any:
-   log.exception('Uncaught exception', extra={    # pragma: no cover
-        'exctype': exctype,
-        'value': value,
-        'tb': tb
-    })
+
+def uncaught_exception_handler(exctype: Any, value: Any, tb: Any) -> Any:
+    log.exception('Uncaught exception', extra={'exctype': exctype, 'value': value, 'tb': tb})  # pragma: no cover
+
+
 sys.excepthook = uncaught_exception_handler
 
 
 commit_info = None
 if os.path.exists(f'{REPO_ROOT}/git-info.txt'):
-    with open(f'{REPO_ROOT}/git-info.txt') as f: # pragma: no cover
+    with open(f'{REPO_ROOT}/git-info.txt') as f:  # pragma: no cover
         commit_info = ''.join(f.readlines())
 
 
-
 def get_processor_list() -> List[ConfigEntry]:
-   processor_list = []
-   config_file = os.environ.get('GOOSE_CONFIG', '/etc/goose.yaml')
-   if os.path.exists(config_file):
-      with open(config_file, 'r') as f:
-          cfg = yaml.safe_load(f)
-      for entry in cfg:
-          processor_list.append(
-              ConfigEntry(
-                  entry['name'],
-                  entry['url'],
-                  [x for x in entry.get('filePatterns', '') if '*' not in x],
-              )
-          )
-   return processor_list
+    processor_list = []
+    config_file = os.environ.get('GOOSE_CONFIG', '/etc/goose.yaml')
+    if os.path.exists(config_file):
+        with open(config_file, 'r') as f:
+            cfg = yaml.safe_load(f)
+        for entry in cfg:
+            processor_list.append(
+                ConfigEntry(
+                    entry['name'],
+                    entry['url'],
+                    [x for x in entry.get('filePatterns', '') if '*' not in x],
+                )
+            )
+    return processor_list
+
 
 process = Processor(get_processor_list())
 
@@ -56,10 +55,12 @@ MATCHED_HEADER = 'did-match-rule'
 
 app = Quart(__name__)
 
+
 @app.route('/')
 async def index() -> str:
     log.info("Index")
     return f"works: {commit_info}"
+
 
 @app.route('/webhook', methods=['POST'])
 async def webhook() -> Response:
@@ -83,10 +84,8 @@ async def webhook() -> Response:
         processed = 'yes'
     else:
         log.debug(f"Unable to find a handler for event: {event}")
-    return Response({}, 200, {
-       FOUND_WEBHOOK_HEADER: processed,
-       MATCHED_HEADER: matched_rule
-    })
+    return Response({}, 200, {FOUND_WEBHOOK_HEADER: processed, MATCHED_HEADER: matched_rule})
+
 
 if __name__ == '__main__':
     app.run()

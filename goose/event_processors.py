@@ -34,14 +34,17 @@ class ConfigEntry(object):
 
 OutboundType = Union[Literal['VERIFY'], Literal['COMMIT']]
 
+
 class GitSource(TypedDict):
     uri: str
     sha: str
+
 
 class FileInfo(TypedDict):
     filepath: str
     matchType: Literal['EXACT_MATCH']
     contents: Dict[str, str]
+
 
 class OutboundPayload(TypedDict):
     app_id: str
@@ -51,14 +54,18 @@ class OutboundPayload(TypedDict):
     source: GitSource
 
 
-
-
 class Processor(object):
     def __init__(self, config: Iterable[ConfigEntry]) -> None:
-        self.config = config;
+        self.config = config
 
-    def _build_payload(self, matches: Iterable[str], commitRange: CommitRange,
-                       eventTimestamp: str, outboundType: OutboundType, repo_url: str) -> OutboundPayload:
+    def _build_payload(
+        self,
+        matches: Iterable[str],
+        commitRange: CommitRange,
+        eventTimestamp: str,
+        outboundType: OutboundType,
+        repo_url: str,
+    ) -> OutboundPayload:
         files = commitRange.get_file_contents_at_latest(matches)
 
         if isinstance(eventTimestamp, int):
@@ -66,24 +73,34 @@ class Processor(object):
 
         return {
             "app_id": "_".join(commitRange.owner_repo),
-            "files": [{'filepath': x,
-                       'matchType': 'EXACT_MATCH',
-                       'contents': {'new': y},
-                       } for x, y in files.items()],
+            "files": [
+                {
+                    'filepath': x,
+                    'matchType': 'EXACT_MATCH',
+                    'contents': {'new': y},
+                }
+                for x, y in files.items()
+            ],
             "eventTimestamp": eventTimestamp,
             "type": outboundType,
             "source": {
                 "uri": prune_dotgit_suffix(repo_url),
                 "sha": commitRange.head_sha,
-            }
+            },
         }
 
     def _call_service(self, url: str, data: Any) -> httpx.Response:
         log.info(f"Calling {url} with data: {data}")
         return httpx.post(url, json=data)
 
-    def _send_update(self, commitRange: CommitRange, outboundType: OutboundType,
-                     eventTimestamp: str, status_url: str, only_run: Optional[List[str]]=None) -> bool:
+    def _send_update(
+        self,
+        commitRange: CommitRange,
+        outboundType: OutboundType,
+        eventTimestamp: str,
+        status_url: str,
+        only_run: Optional[List[str]] = None,
+    ) -> bool:
         '''
         Conceptually, a request comes in. We look through our config, and find
         out if there are any relevant matches. If there are, we send out
@@ -126,14 +143,10 @@ class Processor(object):
             return False
 
         # If this push isn't to the default branch, we don't operate on it.
-        if event['ref'][len('refs/heads/'):] != get_default_branch_name(*event['repository']['full_name'].split('/')):
+        if event['ref'][len('refs/heads/') :] != get_default_branch_name(*event['repository']['full_name'].split('/')):
             return False
 
-        commitRange = CommitRange(
-            event['repository']['clone_url'],
-            event['before'],
-            event['after']
-        )
+        commitRange = CommitRange(event['repository']['clone_url'], event['before'], event['after'])
 
         return self._send_update(
             commitRange,
@@ -186,5 +199,5 @@ class Processor(object):
             outboundType='VERIFY',
             eventTimestamp=pr_info['updated_at'],
             status_url=pr_info['head']['repo']['statuses_url'],
-            **kwargs
+            **kwargs,
         )

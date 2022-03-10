@@ -6,8 +6,12 @@ typecheck: venv
 	venv/bin/mypy -m goose.web_service
 
 tests: venv
-	venv/bin/pytest
 	make typecheck
+	venv/bin/pytest
+	black --check goose
+
+reformat: venv
+	black goose/
 
 watch:
 	watchexec --ignore '.#.*' -e py make tests

@@ -1,7 +1,8 @@
 from typing import Any
 import logging
-from pythonjsonlogger import jsonlogger # type: ignore
+from pythonjsonlogger import jsonlogger  # type: ignore
 from datetime import datetime
+
 
 class JsonFormatter(jsonlogger.JsonFormatter):
     def add_fields(self, log_record: Any, record: Any, message_dict: Any) -> None:

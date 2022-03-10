@@ -4,16 +4,20 @@ from .commits import CommitRange
 import json
 import logging
 import httpx
+
 log = logging.getLogger(__name__)
 
 CommitStatus = Union[Literal['failure'], Literal['error'], Literal['success'], Literal['pending']]
+
 
 class GithubReporter(object):
     def __init__(self, commit_range: CommitRange, statuses_url: str) -> None:
         self.cr = commit_range
         self.statuses_url = statuses_url
 
-    def _req(self, service: str, state: CommitStatus, description: Optional[Union[str, BaseException]]) -> httpx.Response:
+    def _req(
+        self, service: str, state: CommitStatus, description: Optional[Union[str, BaseException]]
+    ) -> httpx.Response:
         owner, repo = self.cr.owner_repo
         sha = self.cr.head_sha
         body = {
