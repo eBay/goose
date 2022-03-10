@@ -190,15 +190,15 @@ class Processor(object):
 
         pr_info = get_pull_request(pr)
         commitRange = CommitRange(
-            pr_info['repository']['clone_url'],
-            pr_info['pull_request']['base']['sha'],
-            pr_info['pull_request']['head']['sha'],
+            pr_info['head']['repo']['clone_url'],
+            pr_info['base']['sha'],
+            pr_info['head']['sha'],
         )
 
         return self._send_update(
             commitRange,
             outboundType='VERIFY',
-            eventTimestamp=pr_info['pull_request']['updated_at'],
-            status_url=pr_info['repository']['statuses_url'],
+            eventTimestamp=pr_info['updated_at'],
+            status_url=pr_info['head']['repo']['statuses_url'],
             **kwargs
         )
