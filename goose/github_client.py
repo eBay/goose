@@ -48,8 +48,8 @@ def _get_json(url: str) -> Any:
     return httpx.get(url, headers=_auth_header()).json()
 
 
-def get_default_branch_name(owner: str, repo: str) -> str:
-    data: Dict[str, Union[str, Any]] = _get_json(f'https://github.corp.ebay.com/api/v3/repos/{owner}/{repo}')
+def get_default_branch_name(url: str) -> str:
+    data: Dict[str, Union[str, Any]] = _get_json(url)
     return data['default_branch']
 
 

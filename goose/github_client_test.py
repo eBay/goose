@@ -22,7 +22,7 @@ def test_default_branch_name(monkeypatch):
     # Eew. No file-like object though b/c StringIO can't handle bytes.
     req.get.return_value.json.return_value = {'default_branch': 'main'}
     monkeypatch.setattr(gc, 'httpx', req)
-    assert gc.get_default_branch_name('owner', 'repo') == 'main'
+    assert gc.get_default_branch_name('url') == 'main'
 
 
 def test_pr_fetch(monkeypatch):

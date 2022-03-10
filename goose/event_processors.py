@@ -143,7 +143,8 @@ class Processor(object):
             return False
 
         # If this push isn't to the default branch, we don't operate on it.
-        if event['ref'][len('refs/heads/') :] != get_default_branch_name(*event['repository']['full_name'].split('/')):
+        repo_url = event['repository']['forks_url'].replace('/forks', '')  # there is no repo api URL
+        if event['ref'][len('refs/heads/') :] != get_default_branch_name(repo_url):
             return False
 
         commitRange = CommitRange(event['repository']['clone_url'], event['before'], event['after'])
