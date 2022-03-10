@@ -2,7 +2,6 @@ from typing import Dict, Any, Union
 from urllib import parse
 import base64
 import os
-import json
 import logging
 import httpx
 
