@@ -1,6 +1,3 @@
-from urllib import request, parse, error
-from http.client import HTTPResponse
-from collections import namedtuple
 from typing import List, Optional, Set, Dict, Union, Literal, Iterable, cast, Any, TypedDict
 import os
 import fs
@@ -9,6 +6,7 @@ import json
 import logging
 import re
 import pytz
+import httpx
 from datetime import datetime
 from .reporters import GithubReporter
 from .commits import CommitRange, prune_dotgit_suffix, sha_doesnt_exist
@@ -80,19 +78,9 @@ class Processor(object):
             }
         }
 
-    def _call_service(self, url: str, data: Any) -> HTTPResponse:
+    def _call_service(self, url: str, data: Any) -> httpx.Response:
         log.info(f"Calling {url} with data: {data}")
-        req = request.Request(
-            url,
-            data=bytes(json.dumps(data), encoding='utf-8'),
-            headers={
-                'content-type': 'application/json'
-            },
-            method='POST',
-        )
-        response: HTTPResponse = request.urlopen(req)
-        log.debug(f"response headers: {response.headers}")
-        return response
+        return httpx.post(url, json=data)
 
     def _send_update(self, commitRange: CommitRange, outboundType: OutboundType,
                      eventTimestamp: str, status_url: str, only_run: Optional[List[str]]=None) -> bool:
@@ -116,15 +104,13 @@ class Processor(object):
                 found_match = True
                 reporter.pending(service)
                 payload = self._build_payload(matches, commitRange, eventTimestamp, outboundType, commitRange.repo_url)
-                # TODO: Refactor this http exception handling away when we move to requests
-                try:
-                    response = self._call_service(matcher.url, payload)
+                response = self._call_service(matcher.url, payload)
+                if response.status_code < 400:
                     reporter.ok(service)
-                except error.HTTPError as e:
-                    if e.code >= 400 and e.code < 500:
-                        reporter.fail(service, e.reason)
-                    else:
-                        reporter.error(service, e.reason)
+                elif response.status_code >= 400 and response.status_code < 500:
+                    reporter.fail(service, response.text)
+                else:
+                    reporter.error(service, response.text)
 
         reporter.ok(ROOT_SERVICE_NAME)
         return found_match

@@ -1,6 +1,5 @@
 from collections import namedtuple
 from unittest.mock import MagicMock
-from urllib import request, response
 from .event_processors import CommitRange
 from . import reporters
 import json

@@ -1,12 +1,7 @@
-import urllib.request
-from urllib.error import HTTPError
-from email.message import EmailMessage
-from http.client import HTTPResponse
-from urllib import response
-from io import StringIO
 from pathlib import Path
 import json
 import os
+import httpx
 
 from unittest.mock import MagicMock, Mock
 from . import event_processors as ep
@@ -17,13 +12,9 @@ ALARM_CONFIG = ep.ConfigEntry('alarms', 'https://example.org/webhook', exact=['a
 NO_EXACT_CONFIG = ep.ConfigEntry('noexact', 'https://example.org/webhook')
 NONMATCH_CONFIG = ep.ConfigEntry('nonmatch', 'https://example.org/webhook', exact=['zoomie'])
 
-fake_successful_http_response = Mock(spec=HTTPResponse)
-fake_successful_http_response.headers = {}
-fake_successful_http_response.status = 200
-fake_successful_http_response.readlines.return_value = []
-
-# For some reason, urllib uses EmailMessage objects for headers.
-fake_error_response = HTTPError('url', 500, 'message', EmailMessage(), None)
+fake_successful_http_response = Mock(spec=httpx.Response)
+fake_successful_http_response.status_code = 200
+fake_successful_http_response.text = ''
 
 CWD = Path(__file__).resolve().parent
 
@@ -40,6 +31,16 @@ def test_commit_range__head_sha():
     cr = ep.CommitRange('https://github.com/ebay/thing.git', 'sha1', 'sha2')
     assert cr.head_sha == 'sha2'
 
+def test_process_push__non_default_branch_push(monkeypatch):
+    with open(f'{CWD}/fixtures/push_with_commits.event.json') as f:
+        data = json.loads(''.join(f.readlines()))
+
+    bn = MagicMock()
+    bn.return_value = 'unmatched'
+    monkeypatch.setattr(ep, 'get_default_branch_name', bn)
+
+    assert ep.Processor([ALARM_CONFIG]).process_push(data) == False
+
 def test_process_push__exactmatch(monkeypatch):
     with open(f'{CWD}/fixtures/push_with_commits.event.json') as f:
         data = json.loads(''.join(f.readlines()))
@@ -54,17 +55,19 @@ def test_process_push__exactmatch(monkeypatch):
 
         monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
         bn = MagicMock()
-        bn.return_value = 'main'
+        bn.return_value = 'foo'
         monkeypatch.setattr(ep, 'get_default_branch_name', bn)
 
-        def urlopen_mock(req, *args, **kwargs):
-            assert req.full_url == 'https://example.org/webhook'
-            assert 'application/json' in req.headers.get('Content-type', {})
-            return fake_successful_http_response
+        httpx_mock = MagicMock()
+        httpx_mock.post.return_value = fake_successful_http_response
+        monkeypatch.setattr(ep, 'httpx', httpx_mock)
 
-        monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
 
-        ep.Processor([ALARM_CONFIG]).process_push(data)
+        assert ep.Processor([ALARM_CONFIG]).process_push(data)
+
+        assert httpx_mock.post.call_count == 1
+        args = httpx_mock.post.call_args[0]
+        assert args[0] == 'https://example.org/webhook'
 
 def test_process_push__delete(monkeypatch):
     with open(f'{CWD}/fixtures/branch-delete.push.json') as f:
@@ -75,7 +78,6 @@ def test_process_push__nomatch(monkeypatch):
     with open(f'{CWD}/fixtures/push_with_commits.event.json') as f:
         data = json.loads(''.join(f.readlines()))
 
-
         mm = MagicMock()
         mm().files_changed.return_value = {'unknown'}
         mm().owner_repo = ('owner', 'repo')
@@ -84,14 +86,14 @@ def test_process_push__nomatch(monkeypatch):
         monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
         bn = MagicMock()
-        bn.return_value = 'main'
+        bn.return_value = 'foo'
         monkeypatch.setattr(ep, 'get_default_branch_name', bn)
 
-        def urlopen_mock(url, *args, **kwargs):
-            assert False, "Shouldn't have called the service"
-        monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
+        httpx_mock = MagicMock()
+        monkeypatch.setattr(ep, 'httpx', httpx_mock)
 
-        ep.Processor([NONMATCH_CONFIG]).process_push(data)
+        assert ep.Processor([NONMATCH_CONFIG]).process_push(data) == False
+        assert not httpx_mock.post.called
 
 def test_process_push__noexact(monkeypatch):
     with open(f'{CWD}/fixtures/push_with_commits.event.json') as f:
@@ -105,20 +107,18 @@ def test_process_push__noexact(monkeypatch):
         monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
         bn = MagicMock()
-        bn.return_value = 'main'
+        bn.return_value = 'foo'
         monkeypatch.setattr(ep, 'get_default_branch_name', bn)
 
+        httpx_mock = MagicMock()
+        monkeypatch.setattr(ep, 'httpx', httpx_mock)
 
-        def urlopen_mock(url, *args, **kwargs):
-            assert False, "Shouldn't have called the service"
-        monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
-
-        ep.Processor([NO_EXACT_CONFIG]).process_push(data)
+        assert ep.Processor([NO_EXACT_CONFIG]).process_push(data) == False
+        assert not httpx_mock.post.called
 
 def test_process_push__sends_content(monkeypatch):
     with open(f'{CWD}/fixtures/push_with_commits.event.json') as f:
         data = json.loads(''.join(f.readlines()))
-        data['ref'] = 'refs/heads/main'
 
         mm = MagicMock()
         mm().repo_url = 'https://example.org'
@@ -130,27 +130,36 @@ def test_process_push__sends_content(monkeypatch):
         monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
         bn = MagicMock()
-        bn.return_value = 'main'
+        bn.return_value = 'foo'
         monkeypatch.setattr(ep, 'get_default_branch_name', bn)
 
 
-        def urlopen_mock(request, *args, **kwargs):
-            data = json.loads(request.data)
-            assert data['eventTimestamp'] == '2022-01-13T23:56:27+00:00'
-            source = data['source']
-            assert source['uri'] == 'https://example.org'
-            assert data['type'] == 'COMMIT'
-            item = data['files'][0]
-            assert item['filepath'] == 'alarms.yml'
-            assert item['matchType'] == 'EXACT_MATCH'
-            assert item['contents']['new'] == "alarm content"
-            assert 'old' not in item['contents']
-            resp = response.addinfourl(StringIO(), {}, 'https://example.org/output')
-            resp.code = 200
-            return resp
-        monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
+        httpx_mock = MagicMock()
+        httpx_mock.post.return_value = fake_successful_http_response
+        monkeypatch.setattr(ep, 'httpx', httpx_mock)
 
-        ep.Processor([ALARM_CONFIG]).process_push(data)
+        assert ep.Processor([ALARM_CONFIG]).process_push(data)
+        args, kwargs = httpx_mock.post.call_args
+        assert args[0] == 'https://example.org/webhook'
+
+        assert kwargs == {
+            'json': {
+                'app_id': 'owner_repo',
+                'eventTimestamp': '2022-01-13T23:56:27+00:00',
+                'source': {
+                    'uri': 'https://example.org',
+                    'sha': 'sha'
+                },
+                'type': 'COMMIT',
+                'files': [{
+                    'filepath': 'alarms.yml',
+                    'matchType': 'EXACT_MATCH',
+                    'contents': {
+                        'new': 'alarm content'
+                    }
+                }]
+            }
+        }
 
 def test_pr__excludes_irrelevant_events():
     with open(f'{CWD}/fixtures/pr.event.json') as f:
@@ -164,10 +173,9 @@ def test_pr__sends_update_for_known_file(monkeypatch):
     with open(f'{CWD}/fixtures/pr.event.json') as f:
         data = json.loads(''.join(f.readlines()))
 
-    def urlopen_mock(request, *args, **kwargs):
-        assert True, "Should have called the service"
-        return fake_successful_http_response
-    monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
+    httpx_mock = MagicMock()
+    httpx_mock.post.return_value = fake_successful_http_response
+    monkeypatch.setattr(ep, 'httpx', httpx_mock)
 
     mm = MagicMock()
     mm().repo_url = 'https://example.org'
@@ -178,15 +186,13 @@ def test_pr__sends_update_for_known_file(monkeypatch):
     monkeypatch.setattr(ep, 'CommitRange', mm)
     monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
-    retval = ep.Processor([ALARM_CONFIG]).process_pull_request(data)
-    assert retval == True, "Should match"
+    assert ep.Processor([ALARM_CONFIG]).process_pull_request(data)
 
 
 def test_raw_update_function(monkeypatch):
-    def urlopen_mock(request, *args, **kwargs):
-        assert True, "Should have called the service"
-        return fake_successful_http_response
-    monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
+    httpx_mock = MagicMock()
+    httpx_mock.post.return_value = fake_successful_http_response
+    monkeypatch.setattr(ep, 'httpx', httpx_mock)
     monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
     with open(f'{CWD}/fixtures/pr.event.json') as f:
@@ -217,10 +223,11 @@ def test_raw_update_function__skip_unspecified(monkeypatch):
 
 
 def test_raw_update__error(monkeypatch):
-    def urlopen_mock(request, *args, **kwargs):
-        assert True, "Should have called the service"
-        raise fake_error_response
-    monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
+    httpx_mock = MagicMock()
+    error = Mock(spec=httpx.Response)
+    error.status_code = 400
+    httpx_mock.post.return_value = error
+    monkeypatch.setattr(ep, 'httpx', httpx_mock)
     monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
     with open(f'{CWD}/fixtures/pr.event.json') as f:
@@ -238,10 +245,12 @@ def test_raw_update__error(monkeypatch):
 
 
 def test_raw_update__multiple_configs(monkeypatch):
-    def urlopen_mock(request, *args, **kwargs):
+    def httpx_mock(request, *args, **kwargs):
         assert True, "Should have called the service"
         return fake_successful_http_response
-    monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
+    httpx_mock = MagicMock()
+    httpx_mock.post.return_value = fake_successful_http_response
+    monkeypatch.setattr(ep, 'httpx', httpx_mock)
     monkeypatch.setattr(ep, 'GithubReporter', MagicMock())
 
     with open(f'{CWD}/fixtures/pr.event.json') as f:
@@ -269,16 +278,13 @@ def test_raw_update__multiple_configs(monkeypatch):
     (500,'error'),
 ])
 def test_update__reports_error(code, reporter_method_called, monkeypatch):
-    def urlopen_mock(request, *args, **kwargs):
-        if code >= 400:
-            fake_error_response.code = code
-            raise fake_error_response
-        resp = Mock(spect=HTTPResponse)
-        resp.status = code
-        resp.readlines.return_value = [b'it', b'works']
+    def call_mock(request, *args, **kwargs):
+        resp = Mock(spec=httpx.Response)
+        resp.status_code = code
+        resp.text = 'it works'
         return resp
 
-    monkeypatch.setattr(urllib.request, 'urlopen', urlopen_mock)
+    monkeypatch.setattr(httpx, 'post', call_mock)
     reporter = MagicMock()
     monkeypatch.setattr(ep, 'GithubReporter', reporter)
 
