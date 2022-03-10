@@ -1,10 +1,10 @@
 from typing import Dict, Any, Union
-from http.client import HTTPResponse
-from urllib import request, parse
+from urllib import parse
 import base64
 import os
 import json
 import logging
+import httpx
 
 log = logging.getLogger(__name__)
 GITHUB_USERNAME = os.environ.get('GITHUB_USERNAME')
@@ -35,30 +35,16 @@ def _auth_header() -> Dict[str, str]:
         'authorization': 'Basic %s' % (base64.b64encode(bytes(f'{GITHUB_USERNAME}:{GITHUB_PASSWORD}', 'utf-8'))).decode('utf-8'),
     }
 
-def github_call(url: str, body: Any) -> HTTPResponse:
+def github_call(url: str, body: Any) -> httpx.Response:
     log.debug("github request: %s to %s", body, url)
-    req = request.Request(
+    return httpx.post(
         url,
-        data=bytes(json.dumps(body), encoding='utf-8'),
-        headers={
-            'content-type': 'application/json',
-            **_auth_header(),
-        },
-        method='POST',
+        headers=_auth_header(),
+        json=body
     )
-
-    response: HTTPResponse = request.urlopen(req)
-    return response
 
 def _get_json(url: str) -> Any:
-    req = request.Request(
-        url,
-        headers={
-            **_auth_header(),
-        },
-    )
-    response = request.urlopen(req)
-    return json.loads(''.join([x.decode('utf-8') for x in response.readlines()]))
+    return httpx.get(url, headers=_auth_header()).json()
 
 def get_default_branch_name(owner: str, repo: str) -> str:
     data: Dict[str, Union[str, Any]] = _get_json(f'https://github.corp.ebay.com/api/v3/repos/{owner}/{repo}')
