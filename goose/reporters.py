@@ -4,6 +4,8 @@ from urllib import request, parse
 from .github_client import github_call
 from .commits import CommitRange
 import json
+import logging
+log = logging.getLogger(__name__)
 
 CommitStatus = Union[Literal['failure'], Literal['error'], Literal['success'], Literal['pending']]
 
@@ -26,6 +28,7 @@ class GithubReporter(object):
         if description:
             body['description'] = cast(str, description)
 
+        log.debug(f"Calling {owner}/{repo} with status {state} for service {service}")
         return github_call(self.statuses_url.replace('{sha}', sha), body)
 
     def fail(self, service: str, message: Union[str, BaseException]) -> None:
