@@ -9,3 +9,4 @@ types-pytz
 black
 pylint
 pylint-exit
+bandit

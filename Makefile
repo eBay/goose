@@ -18,11 +18,14 @@ tests: venv
 	${executable_prefix}pytest
 
 validate: venv
-	make typecheck tests lint
+	make typecheck tests lint security
 	${executable_prefix}black --check goose
 
 reformat: venv
 	${executable_prefix}black goose/
+
+security: venv
+	${executable_prefix}bandit -r -x *_test.py --quiet goose/
 
 lint: venv
 	${executable_prefix}pylint goose/ || ${executable_prefix}pylint-exit -efail $$?

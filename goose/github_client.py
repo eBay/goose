@@ -22,12 +22,10 @@ if None in (GITHUB_USERNAME, GITHUB_PASSWORD):  # pragma: no cover
 
 
 def create_authenticated_repo_url(url: str) -> str:
-    if GITHUB_PASSWORD is None and GITHUB_USERNAME is None:
+    if GITHUB_PASSWORD is None or GITHUB_USERNAME is None:
         log.warning("Not authenticating request. Unknown github credentials")
         return url
     parsed = parse.urlparse(url)
-    assert parsed.username is None
-    assert parsed.password is None
     updated = parsed._replace(netloc=f"{GITHUB_USERNAME}:{GITHUB_PASSWORD}@{parsed.netloc}")
     return parse.urlunparse(updated)
 
