@@ -8,3 +8,9 @@ before_install:
 
 script:
 - docker run ebay/goose/test
+
+deploy:
+  provider: script
+  script: bash docker_push
+  on:
+    branch: main

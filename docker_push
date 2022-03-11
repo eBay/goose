@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# This file exists so that travis-ci can publish the image to dockerhub.
+
+echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+docker push ebay/goose
