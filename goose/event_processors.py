@@ -1,13 +1,10 @@
-from typing import List, Optional, Set, Dict, Union, Literal, Iterable, cast, Any, TypedDict
-import os
-import fs
-import tempfile
-import json
+from __future__ import annotations
+from typing import List, Optional, Set, Dict, Union, Literal, Iterable, Any, TypedDict
+from datetime import datetime
 import logging
 import re
 import pytz
 import httpx
-from datetime import datetime
 from .reporters import GithubReporter
 from .commits import CommitRange, prune_dotgit_suffix, sha_doesnt_exist
 from .github_client import get_default_branch_name, get_pull_request, GithubPullRequestEvent
@@ -21,7 +18,9 @@ GithubPushEvent = Dict[Any, Any]
 GithubIssueCommentEvent = Dict[Any, Any]
 
 
-class ConfigEntry(object):
+class ConfigEntry:
+    'Configuration for an individual service and ruleset'
+
     def __init__(self, name: str, url: str, exact: Optional[List[str]] = None) -> None:
         self.name = name
         self.url = url
@@ -31,22 +30,30 @@ class ConfigEntry(object):
         'Given a filename, does it match this config?'
         return self.exact.intersection(files)
 
+    @staticmethod
+    def from_yaml_entry(cfg: Dict[str, Any]) -> ConfigEntry:
+        return ConfigEntry(
+            cfg['name'],
+            cfg['url'],
+            [x for x in cfg.get('filePatterns', '') if '*' not in x],
+        )
+
 
 OutboundType = Union[Literal['VERIFY'], Literal['COMMIT']]
 
 
-class GitSource(TypedDict):
+class GitSource(TypedDict):  # pylint: disable=missing-class-docstring
     uri: str
     sha: str
 
 
-class FileInfo(TypedDict):
+class FileInfo(TypedDict):  # pylint: disable=missing-class-docstring
     filepath: str
     matchType: Literal['EXACT_MATCH']
     contents: Dict[str, str]
 
 
-class OutboundPayload(TypedDict):
+class OutboundPayload(TypedDict):  # pylint: disable=missing-class-docstring
     app_id: str
     files: List[FileInfo]
     eventTimestamp: str
@@ -54,7 +61,9 @@ class OutboundPayload(TypedDict):
     source: GitSource
 
 
-class Processor(object):
+class Processor:
+    'Processor of github events & drives the matching logic'
+
     def __init__(self, config: Iterable[ConfigEntry]) -> None:
         self.config = config
 
@@ -90,7 +99,7 @@ class Processor(object):
         }
 
     def _call_service(self, url: str, data: Any) -> httpx.Response:
-        log.info(f"Calling {url} with data: {data}")
+        log.info("Calling %s with data: %s", url, data)
         return httpx.post(url, json=data)
 
     def _send_update(

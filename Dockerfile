@@ -17,12 +17,11 @@ RUN pip3 install \
     --no-cache-dir -r requirements.txt
 
 FROM base as test
+RUN apk add make
 RUN pip3 install \
     --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org \
     --no-cache-dir -r requirements.dev.txt
-CMD ["pytest", "-v", \
-    "--cov=.", "--cov-branch", "--cov-report=term-missing", "--cov-fail-under=100", "--durations=0", \
-    "."]
+CMD ["make", "validate", "global_install=1"]
 
 FROM base as production
 EXPOSE 3001

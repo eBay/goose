@@ -33,10 +33,8 @@ def create_authenticated_repo_url(url: str) -> str:
 
 
 def _auth_header() -> Dict[str, str]:
-    return {
-        'authorization': 'Basic %s'
-        % (base64.b64encode(bytes(f'{GITHUB_USERNAME}:{GITHUB_PASSWORD}', 'utf-8'))).decode('utf-8'),
-    }
+    token = (base64.b64encode(bytes(f'{GITHUB_USERNAME}:{GITHUB_PASSWORD}', 'utf-8')).decode('utf-8'),)
+    return {'authorization': f'Basic {token}'}
 
 
 def github_call(url: str, body: Any) -> httpx.Response:

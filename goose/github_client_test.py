@@ -10,7 +10,7 @@ def test_auth_repo_url(monkeypatch):
     assert retval == 'http://test:value@google.com'
 
 
-def test_auth_repo_url(monkeypatch):
+def test_auth_repo_url_empty(monkeypatch):
     monkeypatch.setattr(gc, 'GITHUB_USERNAME', None)
     monkeypatch.setattr(gc, 'GITHUB_PASSWORD', None)
     retval = gc.create_authenticated_repo_url('http://google.com')

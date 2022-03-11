@@ -7,3 +7,5 @@ mypy
 types-PyYAML
 types-pytz
 black
+pylint
+pylint-exit

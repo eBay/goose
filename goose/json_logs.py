@@ -1,12 +1,15 @@
 from typing import Any
-import logging
-from pythonjsonlogger import jsonlogger  # type: ignore
 from datetime import datetime
+from pythonjsonlogger import jsonlogger  # type: ignore
 
 
 class JsonFormatter(jsonlogger.JsonFormatter):
+    '''
+    Adds a few specific properties to the json formatter.
+    '''
+
     def add_fields(self, log_record: Any, record: Any, message_dict: Any) -> None:
-        super(JsonFormatter, self).add_fields(log_record, record, message_dict)
+        super()
         if not log_record.get('timestamp'):
             # this doesn't use record.created, so it is slightly off
             now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
