@@ -6,12 +6,22 @@
 
 [![Build Status](https://app.travis-ci.com/eBay/goose.svg?token=z1Gk7JJrpVngapauqquH&branch=main)](https://app.travis-ci.com/eBay/goose)
 
+Goose is a tool which simplifies gitops by mapping between "files/file patterns
+I care about" and "services that need to know about those changes".
+
+## Known limitations currently
+
 > ⚠ This repository is not "done" and is shared in the spirit of developing in
 > the open. Provide feedback & get involved so we can shape this into something
 > awesome.
 
-Goose is a tool which simplifies gitops by mapping between "files/file patterns
-I care about" and "services that need to know about those changes".
+Big things you probably care about:
+
+1. [There is no auth mechanism between goose & the backing services.](https://github.com/eBay/goose/issues/1)
+2. [The auth mechanism ^^ should ideally be pluggable to handle your systems' special auth requirements.](https://github.com/eBay/goose/issues/2)
+3. [Support for regex matching](https://github.com/eBay/goose/issues/3)
+4. [No way to limit which repositories a given hook runs for. It's either everyone or no one.](https://github.com/eBay/goose/issues/4)
+
 
 ## Why?
 We have found examples of services which require us to configure resources by
@@ -35,9 +45,9 @@ The end goal is you simply:
 2. Check in the relevant files
 3. Profit!
 
-The service sends events for both "VERIFY" actions, like when a pull request is
-created, as well as "COMMIT" actions, which are when the change actually needs
-to take place. For VERIFY actions, these will be represented in the PR status.
+The service sends events for both `VERIFY` actions, like when a pull request is
+created, as well as `COMMIT` actions, which are when the change actually needs
+to take place. For `VERIFY` actions, these will be represented in the PR status.
 
 ## How?
 
@@ -97,7 +107,7 @@ name: A human-readable name for what the service does
 owner: Contact information so we can track down the relevant owners.
 url: The URL that will receive the request for processing the event.
 filePatterns: (list of strings) files you're hoping to find. This supports both exact matches as well as glob patterns (including globstar support)
-includeOld: boolean, default=false. Whether to send the old file contents in addition to the new file contents in the payload.
+includeOld: boolean, default=false. Whether to send the previous version's file contents
 ```
 
 ## Service Provider API
