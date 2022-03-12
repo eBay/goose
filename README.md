@@ -95,11 +95,12 @@ Example:
   url: identity-control.example.org/
 ```
 
-When a given repository updates their `alarms.yaml` file, we get the newest
-version of that file sent to the relevant url.
+When one of our repositories updates their `alarms.yaml` file, goose will fetch
+the newest version of that file sent to the relevant url.
 
-In the group permissions, we send over the old file in addition to the new one
-and match `OWNERS.yaml` or `OWNERS.json` files in any folder.
+In the group permissions, goose sends over the old file (e.g. before the change
+was made) in addition to the new one, if any `OWNERS.yaml` or `OWNERS.json`
+files match in any folder.
 
 This is the format of the config in this repository to get the functionality to
 work.
@@ -158,3 +159,16 @@ File:
 ## Why goose?
 
 It stands for GitOpsSErvice (or git oops service, if you prefer).
+
+## Does this help me get slack notifications or something?
+
+Sorta! This really serves as an intermediate layer between git and the systems
+you may have internally to accomplish such things. Goose needs a webservice on
+the other side to talk with. The value proposition to those web services is that
+they don't have to learn what a git repository is or convince developers to
+setup yet another git hook.
+
+So your alarms system team would integrate with goose. They would define a file
+format that you should write and the file names that they'll pay attention
+to. When you make those changes, goose will connect your commits with their
+service.
