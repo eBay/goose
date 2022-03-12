@@ -51,23 +51,25 @@ to take place. For `VERIFY` actions, these will be represented in the PR status.
 
 ## How?
 
-To get started, we need to build a config for when to call services and which
-services those are. We'll also need some GitHub credentials to operate.
+To get started, we need github credentials and a config file to tell goose what
+it should do.
 
 GitHub credentials can be either specified from environment variables
 (`GITHUB_USERNAME`, `GITHUB_PASSWORD`), or goose will look in the contents of
 `/etc/secrets/GITHUB_USERNAME` and `/etc/secrets/GITHUB_PASSWORD` for use with
-k8s-oriented volume mounts.
+kubernetes-oriented volume mounts.
 
-To pass in a config file, goose looks at `GOOSE_CONFIG` for a file location,
-defaulting to `/etc/goose.yml`.
+Goose is built to run inside a docker container (or kubernetes pod), so it uses
+Dockerfiles for setup & running. To pass in [a config file](#config-file), goose
+looks at the `GOOSE_CONFIG` environment variable for a file location, defaulting
+to `/etc/goose.yml`.
 
 A simple, example Dockerfile might look like:
 
 ```dockerfile
-FROM hub.docker.io/ebay/goose:latest
-COPY ./service-config.yml /etc/goose.yml
-ENV GOOSE_CONFIG /etc/goose.yml
+FROM docker.io/ebay/goose:latest
+COPY path/to/my/config.yml /etc/goose.yml
+ENV GOOSE_CONFIG /etc/goose.yml # technically redundant since this is the default.
 ENV GITHUB_USERNAME myusername
 ENV GITHUB_PASSWORD very-secret
 ```
