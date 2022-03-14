@@ -9,6 +9,13 @@
 Goose is a tool which simplifies gitops by mapping between "files/file patterns
 I care about" and "services that need to know about those changes".
 
+- [Known Limitations](#known-limitations-currently)
+- [Why?](#why)
+- [How to use it](#how)
+- [How to configure it](#config-file)
+- [Backing service API contract](#service-provider-api)
+- [FAQ](#faq)
+
 ## Known limitations currently
 
 > ⚠ This repository is not "done" and is shared in the spirit of developing in
