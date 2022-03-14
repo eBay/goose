@@ -74,25 +74,11 @@ ENV GITHUB_USERNAME myusername
 ENV GITHUB_PASSWORD very-secret
 ```
 
-For local testing, you can put that Dockerfile in your goose setup and run it
-like you would other docker files.
 
-```
-mkdir ~/projects/goose-internal  # The directory isn't important. Just for demo purposes.
-cd ~/projects/goose-internal
-# create the Dockerfile above
-docker build -t goose-internal . # Build the docker image. goose-internal is the image's local name
-docker run goose-internal        # run the image we just built.
-```
+You can deploy that Dockerfile with your hosting provider and get honkin'.
 
-From there, you can send it git events to validate your implementation. There
-are some already in the `./goose/fixtures` directory, or you can see the output
-of any of your configured git hooks in the settings of your git repository. The
-`drive-local-message.sh` will help you replay them. Given that receive git hooks
-need to be accessible from your github instance, the you'll probably need to
-deploy this docker setup before live testing can be done. Those instructions are
-out of scope for this README, but your hosting provider probably has useful
-information.
+
+For local setup instructions, check out [the contributing guide](./contributing.md)
 
 ## Config File
 
@@ -148,7 +134,7 @@ files: []File
 
 File:
   filepath: full path to the file, relative to the repository root
-  matchType: enum of EXACT_MATCH or GLOB_MATCH
+  matchType: enum of EXACT_MATCH or GLOB_M`ATCH
   contents:
     new: (optional) string of file contents after change
     old: (optional) string of file contents before change
