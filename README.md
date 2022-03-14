@@ -74,6 +74,12 @@ ENV GITHUB_USERNAME myusername
 ENV GITHUB_PASSWORD very-secret
 ```
 
+
+You can deploy that Dockerfile with your hosting provider and get honkin'.
+
+
+For local setup instructions, check out [the contributing guide](./contributing.md)
+
 ## Config File
 
 The config file holds the mapping of the filenames/globs you care about
@@ -128,7 +134,7 @@ files: []File
 
 File:
   filepath: full path to the file, relative to the repository root
-  matchType: enum of EXACT_MATCH or GLOB_MATCH
+  matchType: enum of EXACT_MATCH or GLOB_M`ATCH
   contents:
     new: (optional) string of file contents after change
     old: (optional) string of file contents before change
