@@ -1,8 +1,0 @@
-gitpython
-fs
-quart
-hypercorn
-pyyaml
-python-json-logger
-pytz
-httpx[http2]
