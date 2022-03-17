@@ -1,8 +1,0 @@
-[run]
-branch = True
-omit = *_test.py
-
-[report]
-exclude_lines =
-    pragma: no cover
-    if __name__ == .__main__.:
