@@ -1,9 +1,6 @@
 Ideally, this app will focus as a simple call & response style API. At a high
 level, it looks like this.
 
-[![](https://mermaid.ink/img/pako:eNqNkcFqwzAMhl9F-LqE3XMoBFqS41iuuai20hpiO5XlslD67rNLy0oP225G3_f7F-iidDCkGhXplMhr2lo8MLrRAyzIYrVd0At0gBE6K33av6K-oJ48r_sgr7AtsJ2RXRyIz1ZTMbp6s3nrG_j4hMCgg3P2luzzvMtj8sb6A0RBSRGm7Byf_v_besdbYx1_KkuobWDIIWCa6Vy2W3CdA5oK7AT0ZaPEorZZzcsNSWuKsWy4Yw78VP1A_6_-PfSw6qxtg88pVSlH7NCafJtL4aOSIzkaVZOfOUxRRjX6azbTYlBoZ6wEVs2Ec6RKYZIwrF6rRjjRQ7qf925dvwEUbq_R)](https://mermaid.live/edit#pako:eNqNkcFqwzAMhl9F-LqE3XMoBFqS41iuuai20hpiO5XlslD67rNLy0oP225G3_f7F-iidDCkGhXplMhr2lo8MLrRAyzIYrVd0At0gBE6K33av6K-oJ48r_sgr7AtsJ2RXRyIz1ZTMbp6s3nrG_j4hMCgg3P2luzzvMtj8sb6A0RBSRGm7Byf_v_besdbYx1_KkuobWDIIWCa6Vy2W3CdA5oK7AT0ZaPEorZZzcsNSWuKsWy4Yw78VP1A_6_-PfSw6qxtg88pVSlH7NCafJtL4aOSIzkaVZOfOUxRRjX6azbTYlBoZ6wEVs2Ec6RKYZIwrF6rRjjRQ7qf925dvwEUbq_R)
-
-<!--
 ```mermaid
 sequenceDiagram
   participant G as GitHub
@@ -16,13 +13,9 @@ sequenceDiagram
   A->>H: Success or Error
   H->>G: Success status for goose/alarms-service
   H->>G: Success status for goose
-  H->>-G: Done
 ```
--->
 
-If there is an error, however, we need to be able to recover. Ideally, we'd do
-this without having to maintain a database, because databases add a bunch of
-infrastructure that's more difficult to maintain.
+If there is an error, however, we need to be able to recover. We'd love to solve this without having to maintain a database, because databases add a bunch of infrastructure that's more difficult to maintain.
 
 Errors may be:
 1. Timeouts
@@ -37,6 +30,19 @@ the GitHub statuses API.
 In order to retry, we can monitor comments to the pull request. If a user says
 `retry $service`, then we can retry that particular service.
 
-The failure to get the initial payload is a harder problem, however. One partial
-solution is to monitor unhandled exceptions and manually (for now) redrive those
-messages (eew). The solution to this problem is tracked in [#29](https://github.corp.ebay.com/jabrahms/goose/issues/29).
+The failure to get the initial payload is a harder problem, however. This is also the same use-case as github instances that are behind a NAT or similar. To solve this, we need to support a polling mechanism. This requires a database.
+
+```mermaid
+sequenceDiagram
+  participant DB as Database
+  participant H as Goose
+  participant G as GitHub
+  participant A as AlarmsService
+  H->>DB: Get list of services to poll
+  H->>G: Poll repository for changes
+  H->>DB: Write lease into db for given repo, to prevent concurrent processing
+  H->>A: Post relevant changes to service
+  H->>DB: Write updated status to database
+```
+
+Because the database happens after the change to the alarms service, this means we could send duplicate messages in the case of errors. Luckily, we'll always send the most up-to-date version of the repository. This means that **backing services MUST be idempotent**. This work is tracked in [this ticket](https://github.com/eBay/goose/issues/10).
