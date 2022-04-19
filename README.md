@@ -6,6 +6,7 @@
 
 [![Build Status](https://app.travis-ci.com/eBay/goose.svg?token=z1Gk7JJrpVngapauqquH&branch=main)](https://app.travis-ci.com/eBay/goose)
 [![Known Vulnerabilities](https://snyk.io/test/github/ebay/goose/badge.svg)](https://snyk.io/test/github/ebay/goose/)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5970/badge)](https://bestpractices.coreinfrastructure.org/projects/5970)
 
 Goose is a tool which simplifies gitops by mapping between "files/file patterns
 I care about" and "services that need to know about those changes".
