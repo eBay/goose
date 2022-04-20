@@ -9,7 +9,8 @@ should have a bunch of useful commands.
 
 You need to have python3 installed.
 
-You can run the tests by running `make tests`.
+You can run the tests by running `make tests`. There are various linters there
+which will be required for your PR to eventually pass the build.
 
 To get a server up and running, you'll need to get GitHub credentials with the
 "repo" scope, which you should be able to get from the [personal access token
