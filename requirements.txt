@@ -6,3 +6,4 @@ pyyaml
 python-json-logger
 pytz
 httpx[http2]
+setuptools>=70.0.0 # not directly required, pinned by Snyk to avoid a vulnerability
