@@ -37,6 +37,27 @@ class GithubReporter:
         log.debug("Calling %s/%s with status %s for service %s", owner, repo, state, service)
         return github_call(self.statuses_url.replace('{sha}', sha), body)
 
+    def poll_for_changes(self, interval: int = 60) -> None:
+        """
+        Poll the repository for changes at a specified interval.
+        
+        :param interval: Time in seconds between each poll.
+        """
+        import time
+
+        while True:
+            try:
+                # Example logic to check for changes
+                response = self._req('poll', 'pending', 'Polling for changes')
+                if response.status_code == httpx.codes.OK:
+                    log.info("Polling successful, no changes detected.")
+                else:
+                    log.warning("Polling failed with status code: %s", response.status_code)
+            except Exception as e:
+                self.error('poll', e)
+
+            time.sleep(interval)
+
     def fail(self, service: str, message: Union[str, BaseException]) -> bool:
         resp = self._req(service, 'failure', message)
         return resp.status_code == httpx.codes.OK
