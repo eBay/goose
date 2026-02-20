@@ -6,3 +6,4 @@ pyyaml
 python-json-logger
 pytz
 httpx[http2]
+werkzeug>=3.1.6 # not directly required, pinned by Snyk to avoid a vulnerability
